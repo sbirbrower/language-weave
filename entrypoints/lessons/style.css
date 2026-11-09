@@ -1,0 +1,165 @@
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#fbfaf7, #17171a);
+  --text: light-dark(#1d1d1f, #ececee);
+  --muted: color-mix(in srgb, var(--text) 60%, transparent);
+  --line: color-mix(in srgb, var(--text) 14%, transparent);
+  --soft: color-mix(in srgb, var(--text) 5%, transparent);
+  --accent: light-dark(#3b7bd4, #79a9ee);
+  font: 15px/1.5 system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+main {
+  max-width: 46rem;
+  margin: 2rem auto 4rem;
+  padding: 0 16px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+}
+
+section {
+  margin-top: 2rem;
+}
+
+p {
+  margin: 0.3rem 0;
+}
+
+.intro,
+.muted {
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.grow {
+  flex: 1 1 16rem;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  font-weight: normal;
+  color: inherit;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+header select {
+  width: auto;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+button.quiet {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.note {
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--accent);
+  background: var(--soft);
+}
+
+.lesson {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0;
+}
+
+.lesson summary {
+  cursor: pointer;
+}
+
+.lesson .title {
+  font-weight: 600;
+}
+
+.lesson ul {
+  margin: 0.4rem 0;
+  padding-left: 1.2rem;
+}
+
+.lesson .actions {
+  margin-top: 0.5rem;
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Weave lessons</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Your lessons</h1>
+        <label>
+          <span class="visually-hidden">Language</span>
+          <select id="language"></select>
+        </label>
+      </header>
+      <p class="intro">
+        Ask for a lesson on anything: a topic, and as much as you like about it. Claude Opus writes it as a lesson like the course's, in under half a minute; check it, change
+        anything, and save it. It's then in the popup's lesson list, under Your lessons, and taught like any other.
+      </p>
+
+      <section aria-labelledby="askTitle">
+        <h2 id="askTitle">New lesson</h2>
+        <form id="ask">
+          <div class="row">
+            <label class="grow">
+              Topic
+              <input id="topic" required placeholder="Expressions of quantity" />
+            </label>
+            <label>
+              Level
+              <select id="level"></select>
+            </label>
+          </div>
+          <label>
+            Details
+            <textarea
+              id="details"
+              rows="10"
+              placeholder="What to cover and what to leave out, words you want, situations to set it in, what you find hard, how it differs from what you know…"
+            ></textarea>
+          </label>
+          <div class="actions">
+            <button type="submit" id="write">Write the lesson</button>
+            <span id="askStatus" class="muted" role="status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section id="draftSection" aria-labelledby="draftTitle" hidden>
+        <h2 id="draftTitle">Check it</h2>
+        <form id="draft">
+          <label>
+            Title
+            <input id="title" required />
+          </label>
+          <p class="muted" id="draftLevel"></p>
+          <p class="note" id="leftOut" hidden></p>
+          <label>
+            Points, one per line
+            <textarea id="points" rows="8" required></textarea>
+          </label>
+          <label>
+            Notes for the writers, one per line
+            <textarea id="notes" rows="5"></textarea>
+          </label>
+          <div class="actions">
+            <button type="submit">Save lesson</button>
+            <button type="button" id="discard" class="quiet">Discard</button>
+            <span id="draftStatus" class="muted" role="status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section aria-labelledby="savedTitle">
+        <h2 id="savedTitle">Saved</h2>
+        <p id="none" class="muted" hidden>None yet in this language.</p>
+        <div id="saved"></div>
+      </section>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

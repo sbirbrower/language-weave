@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light dark;
+  font: 15px/1.5 system-ui, sans-serif;
+}
+
+main {
+  max-width: 34rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+fieldset {
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 6px;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row > select,
+.row > input[type='range'] {
+  flex: 1;
+}
+
+input:not([type]),
+input[type='password'],
+input[type='number'],
+select {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+}
+
+#status.error {
+  color: #c53030;
+}

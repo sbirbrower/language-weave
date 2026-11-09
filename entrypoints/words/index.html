@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Weave words</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Words</h1>
+        <label>
+          <span class="visually-hidden">Language</span>
+          <select id="language"></select>
+        </label>
+      </header>
+      <p class="intro">
+        Every word woven into a page you've read, practised in a lesson or listened to there a few times. ☆ saves one to learn, ✓ marks one you know: on the page, in the popup or here.
+        Known words are still woven. A word is also known once you've listened to it <span id="listens"></span> times, or answered it right in practice;
+        it stays known until you unmark it.
+      </p>
+      <div id="stats" class="stats"></div>
+
+      <div class="tools">
+        <label>
+          <span class="visually-hidden">Find a word</span>
+          <input type="search" id="search" placeholder="Find a word" />
+        </label>
+        <button type="button" id="export">Export saved words (Anki CSV)</button>
+      </div>
+
+      <section aria-labelledby="savedTitle">
+        <h2 id="savedTitle">Saved</h2>
+        <ul id="saved" class="words"></ul>
+      </section>
+
+      <section aria-labelledby="knownTitle">
+        <h2 id="knownTitle">Known</h2>
+        <ul id="known" class="words"></ul>
+      </section>
+
+      <section aria-labelledby="seenTitle">
+        <h2 id="seenTitle">Seen</h2>
+        <details id="seenFold">
+          <summary id="seenSummary"></summary>
+          <ul id="seen" class="words"></ul>
+        </details>
+      </section>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

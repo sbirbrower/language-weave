@@ -1,0 +1,116 @@
+@import '../progress/style.css';
+
+:root {
+  --accent: light-dark(#2f5bd3, #8fb0ff);
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+.tools label {
+  flex: 1 1 12rem;
+}
+
+input[type='search'] {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.5rem;
+}
+
+button {
+  font: inherit;
+}
+
+.words {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.words li {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.words li.empty {
+  display: block;
+  border: 0;
+}
+
+.words .body {
+  flex: 1;
+  min-width: 0;
+}
+
+.words .head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  align-items: baseline;
+}
+
+.words .word {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.words .say {
+  border: 0;
+  background: none;
+  padding: 0 0.15rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.words .definition {
+  margin: 0.1rem 0 0;
+}
+
+.words .example {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.words .english {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.05rem 0 0;
+}
+
+.words .actions {
+  display: flex;
+  gap: 0.2rem;
+  align-items: flex-start;
+}
+
+.toggle {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--soft);
+}
+
+.toggle[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: light-dark(#ffffff, #10172a);
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--muted);
+}

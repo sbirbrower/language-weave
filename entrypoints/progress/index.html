@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Weave progress</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Progress</h1>
+        <label>
+          <span class="visually-hidden">Language</span>
+          <select id="language"></select>
+        </label>
+      </header>
+      <p class="intro">From lesson mode's Practice tab: every exercise you answer counts here.</p>
+
+      <section aria-labelledby="recapTitle">
+        <h2 id="recapTitle">Recap</h2>
+        <p id="recapWeek" class="lead"></p>
+        <p id="recapNew" class="muted"></p>
+        <div id="stats" class="stats"></div>
+      </section>
+
+      <section aria-labelledby="calendarTitle">
+        <h2 id="calendarTitle">Calendar</h2>
+        <div class="calendar-scroll">
+          <div id="calendar" class="calendar" role="img"></div>
+        </div>
+        <p class="muted legend">
+          <span>Less</span>
+          <span class="cell shade-0"></span><span class="cell shade-1"></span><span class="cell shade-2"></span><span class="cell shade-3"></span><span class="cell shade-4"></span>
+          <span>More</span>
+          <span id="goal"></span>
+        </p>
+      </section>
+
+      <section aria-labelledby="levelsTitle">
+        <h2 id="levelsTitle">Levels</h2>
+        <div id="levels"></div>
+      </section>
+
+      <section aria-labelledby="milestonesTitle">
+        <h2 id="milestonesTitle">Milestones</h2>
+        <ul id="milestones" class="milestones"></ul>
+      </section>
+
+      <section aria-labelledby="workTitle">
+        <h2 id="workTitle">Needs work</h2>
+        <ul id="needsWork" class="flagged"></ul>
+      </section>
+
+      <section aria-labelledby="lessonsTitle">
+        <h2 id="lessonsTitle">Lessons</h2>
+        <p class="muted key">
+          <span class="dot learned"></span> learned (right on two days)
+          <span class="dot practising"></span> practising
+          <span class="dot needs-work"></span> needs work
+          <span class="dot"></span> not yet
+        </p>
+        <div id="lessons"></div>
+      </section>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

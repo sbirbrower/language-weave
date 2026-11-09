@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Language Weave options</title>
+    <meta name="manifest.open_in_tab" content="true" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Language Weave</h1>
+      <form id="settings">
+        <fieldset>
+          <legend>Model</legend>
+          <label>
+            Provider
+            <select id="provider">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+            <small id="providerNote" hidden>Language Weave's prompts are written and tested on Claude. With another provider, each Claude model is stood in for by one of its models below.</small>
+          </label>
+          <div id="anthropicFields">
+            <label>
+              Anthropic API key
+              <input id="apiKey" type="password" autocomplete="off" spellcheck="false" />
+            </label>
+            <label>
+              Model
+              <span class="row">
+                <select id="model"></select>
+                <button type="button" id="loadModels">Load models</button>
+              </span>
+            </label>
+          </div>
+          <div id="openaiFields" hidden>
+            <label>
+              OpenAI API key
+              <input id="openaiApiKey" type="password" autocomplete="off" spellcheck="false" />
+            </label>
+            <label>
+              Fast model
+              <select id="openai-fast"></select>
+              <small>Where Language Weave uses Claude Haiku: the weave, mark checks, hints.</small>
+            </label>
+            <label>
+              Main model
+              <select id="openai-main"></select>
+              <small>Where it uses Claude Sonnet: passages, lesson kits, practice, marks.</small>
+            </label>
+            <label>
+              Best model
+              <select id="openai-best"></select>
+              <small>Where it uses Claude Opus: lessons you write.</small>
+            </label>
+            <p class="row"><button type="button" id="openaiLoadModels">Load models</button></p>
+          </div>
+          <div id="geminiFields" hidden>
+            <label>
+              Gemini API key
+              <input id="geminiApiKey" type="password" autocomplete="off" spellcheck="false" />
+            </label>
+            <label>
+              Fast model
+              <select id="gemini-fast"></select>
+              <small>Where Language Weave uses Claude Haiku: the weave, mark checks, hints.</small>
+            </label>
+            <label>
+              Main model
+              <select id="gemini-main"></select>
+              <small>Where it uses Claude Sonnet: passages, lesson kits, practice, marks.</small>
+            </label>
+            <label>
+              Best model
+              <select id="gemini-best"></select>
+              <small>Where it uses Claude Opus: lessons you write.</small>
+            </label>
+            <p class="row"><button type="button" id="geminiLoadModels">Load models</button></p>
+          </div>
+          <label>
+            Effort
+            <select id="effort">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="default">Model default (for models without effort)</option>
+            </select>
+          </label>
+          <label>
+            Thinking
+            <select id="thinking">
+              <option value="off">Off: much faster, where the model allows it</option>
+              <option value="on">On</option>
+            </select>
+            <small id="thinkingNote" hidden></small>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Speech</legend>
+          <label>
+            Google Cloud Text-to-Speech API key
+            <input id="googleTtsKey" type="password" autocomplete="off" spellcheck="false" />
+            <small>Reads lesson passages aloud (voice: Chirp 3 HD Leda). Leave empty for no speech.</small>
+          </label>
+          <label class="check">
+            <input id="speaking" type="checkbox" />
+            Speaking exercises
+          </label>
+          <small>Practice sometimes asks you to say a sentence aloud. Chrome asks for the microphone once, here. Each recording goes to DeepInfra, where Whisper writes down what you said; nothing is recorded until you press Record.</small>
+          <label>
+            DeepInfra API key
+            <input id="deepinfraApiKey" type="password" autocomplete="off" spellcheck="false" />
+            <small>For speaking exercises. About $0.00002 a sentence.</small>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Lesson marks</legend>
+          <label>
+            TypeSafe API key
+            <input id="typesafeApiKey" type="password" autocomplete="off" spellcheck="false" />
+            <small>Jev checks each mark first, in about 0.15s, so more marks reach the page and fewer wrong ones. The page's sentences go to TypeSafe. Leave empty to check every mark with the model.</small>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Weaving</legend>
+          <label>
+            Words to weave
+            <select id="weave"></select>
+          </label>
+          <label>
+            Density
+            <span class="row">
+              <input id="density" type="range" min="1" max="30" step="1" />
+              <output id="densityValue"></output>
+            </span>
+          </label>
+          <label>
+            Ask before weaving a page estimated to cost more than
+            <span class="row">
+              <span>$</span>
+              <input id="confirmAbove" type="number" min="0" step="0.05" />
+            </span>
+          </label>
+          <label class="check">
+            <input id="topUp" type="checkbox" />
+            Let the model add more beginner words when the page's words and easy words don't reach the density
+          </label>
+          <label class="check">
+            <input id="debug" type="checkbox" />
+            Debug: log rejected lines to the page console
+          </label>
+        </fieldset>
+
+        <p class="row">
+          <button type="submit">Save</button>
+          <span id="status" role="status"></span>
+        </p>
+      </form>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

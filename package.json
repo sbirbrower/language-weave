@@ -1,0 +1,30 @@
+{
+  "name": "language-weave",
+  "description": "Weaves a language you are learning into English web pages, and teaches it.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "wxt prepare",
+    "lesson-stats": "vitest run tests/lesson-stats.test.ts",
+    "eval": "vitest run --config vitest.eval.config.ts",
+    "speak": "node evals/speak/recorder.mjs"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "jsdom": "^30.1.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "wxt": "^0.21.5"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0"
+  }
+}

@@ -1,0 +1,25 @@
+node_modules/
+.output/
+.wxt/
+.anthropic_key
+evals/out/
+.deepinfra_key
+.gemini_key
+.google_tts_key
+.typesafe_key
+local/
+.venv/
+__pycache__/
+# One-off experiments and their output, kept locally.
+scratch/
+# Your own voice recordings for `npm run speak`, and their results.
+evals/speak/clips/
+evals/speak/takes.json
+.DS_Store
+# Evals and the saved pages they and lesson-stats read: kept locally, explained in docs/evals.md.
+evals/
+tests/fixtures/
+google_books.txt
+# Working notes for Claude Code sessions, kept locally.
+CLAUDE.md
+docs/dev/
