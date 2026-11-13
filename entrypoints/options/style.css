@@ -33,6 +33,11 @@ legend {
   color: var(--primary);
 }
 
+/* Fields are grids, which sit beside a float rather than under it. */
+fieldset > :not(legend) {
+  clear: both;
+}
+
 label,
 .field {
   display: grid;
