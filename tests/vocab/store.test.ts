@@ -109,6 +109,24 @@ describe('wordLists', () => {
     expect(wordLists(v, 'HOUSE').saved).toHaveLength(1);
     expect(wordLists(v, 'house').seen).toHaveLength(0);
   });
+
+  it('lists woven or practised words before those only listened to', () => {
+    const v = newVocab();
+    applyEvent(v, { kind: 'seen', info: info('chien') }, '2026-11-01');
+    applyEvent(v, { kind: 'answer', key: 'chat', right: true, info: info('chat', 'cat') }, '2026-11-02');
+    for (let i = 0; i < LISTED_LISTENS; i++) applyEvent(v, { kind: 'listen', key: 'oiseau', info: info('oiseau', 'bird') }, '2026-11-08');
+    applyEvent(v, { kind: 'set', info: info('chat', 'cat'), status: 'seen' }, '2026-11-08');
+    expect(wordLists(v).seen.map((w) => w.key)).toEqual(['chat', 'chien', 'oiseau']);
+  });
+
+  it('keeps a word in the list it was shown in', () => {
+    const v = newVocab();
+    applyEvent(v, { kind: 'seen', info: info('chien') }, '2026-11-01');
+    applyEvent(v, { kind: 'set', info: info('chien'), status: 'known' }, '2026-11-08');
+    const lists = wordLists(v, '', new Map([['chien', 'seen']]));
+    expect(lists.seen.map((w) => [w.key, w.status])).toEqual([['chien', 'known']]);
+    expect(lists.known).toHaveLength(0);
+  });
 });
 
 describe('ankiCsv', () => {

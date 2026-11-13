@@ -200,16 +200,24 @@ export type ListedWord = WordEntry & { key: string };
 /** Only listened to, and not yet `LISTED_LISTENS` times. */
 const barelyMet = (e: WordEntry) => e.status === 'seen' && !e.pages && !e.right && !e.wrong && (e.listens ?? 0) < LISTED_LISTENS;
 
-/** The Words page's lists: those matching `query` (the word, gloss or English), latest first (`byRecent`). */
-export function wordLists(vocab: Vocab, query = ''): Record<WordStatus, ListedWord[]> {
+/** Woven on a page or answered in practice, not only listened to (a lesson's word read aloud). */
+const worked = (e: WordEntry) => e.pages > 0 || e.right + e.wrong > 0;
+
+/**
+ * The Words page's lists: those matching `query` (the word, gloss or English),
+ * woven or practised words first, then those only listened to, each latest
+ * first (`byRecent`). A word in `listedAs` goes in that list whatever its
+ * status (one just ☆'d or ✓'d stays where the reader clicked it).
+ */
+export function wordLists(vocab: Vocab, query = '', listedAs?: ReadonlyMap<string, WordStatus>): Record<WordStatus, ListedWord[]> {
   const q = query.trim().toLowerCase();
   const lists: Record<WordStatus, ListedWord[]> = { saved: [], known: [], seen: [] };
   for (const [key, e] of Object.entries(vocab.words)) {
     if (barelyMet(e)) continue;
     if (q && ![e.word, e.gloss, ...e.english].some((s) => s.toLowerCase().includes(q))) continue;
-    lists[e.status].push({ ...e, key });
+    lists[listedAs?.get(key) ?? e.status].push({ ...e, key });
   }
-  for (const list of Object.values(lists)) byRecent(list);
+  for (const list of Object.values(lists)) byRecent(list).sort((a, b) => Number(worked(b)) - Number(worked(a)));
   return lists;
 }
 

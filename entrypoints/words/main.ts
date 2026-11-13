@@ -8,7 +8,7 @@ import { SCRIPT_ATTR, scriptStyles } from '@/src/ruby';
 import { getSettings, type Settings } from '@/src/settings';
 import { createSpeaker, type Speaker } from '@/src/speaker';
 import type { Definition } from '@/src/vocab/definitions';
-import { ankiCsv, PROMOTION, vocabKey, vocabStore, wordLists, type ListedWord } from '@/src/vocab/store';
+import { ankiCsv, PROMOTION, vocabKey, vocabStore, wordLists, type ListedWord, type WordStatus } from '@/src/vocab/store';
 import { wordRow } from '@/src/vocab/wordRows';
 
 startPageTheme();
@@ -65,9 +65,15 @@ function row(word: ListedWord): HTMLLIElement {
     say: (text, slow) => speaker.play([text], () => {}, (error) => console.warn(error), slow),
     can: recorded && ((text) => recorded.has(recordingKey(text))),
     onListen: () => void store.record([{ kind: 'listen', key: word.key, info }]),
-    onSet: (status) => void store.record([{ kind: 'set', info, status }]),
+    onSet: (status) => {
+      if (!listedAs.has(word.key)) listedAs.set(word.key, word.status);
+      void store.record([{ kind: 'set', info, status }]);
+    },
   });
 }
+
+/** Words ☆'d or ✓'d here, and the list they were in: they stay there, so one doesn't jump away when clicked, until the page is reloaded or the language changed. */
+const listedAs = new Map<string, WordStatus>();
 
 /** Definitions and examples got so far (`src/vocab/definitions.ts`), by language and word; asked for once a page. */
 const definitions = new Map<string, Definition>();
@@ -102,7 +108,7 @@ async function render() {
   else document.documentElement.removeAttribute(SCRIPT_ATTR);
 
   const all = wordLists(vocab);
-  const lists = wordLists(vocab, search.value);
+  const lists = wordLists(vocab, search.value, listedAs);
   const stat = (value: number, label: string) => {
     const box = el('div', 'stat');
     box.append(el('strong', '', String(value)), el('span', '', label));
@@ -140,7 +146,10 @@ async function init() {
   languageSelect.replaceChildren(
     ...Object.values(languages).map((l) => Object.assign(el('option', '', `${l.flag} ${l.displayName}`), { value: l.code, selected: l.code === settings.language })),
   );
-  languageSelect.addEventListener('change', () => void render());
+  languageSelect.addEventListener('change', () => {
+    listedAs.clear();
+    void render();
+  });
   $('seenFold').addEventListener('toggle', () => void render());
   search.addEventListener('input', () => void render());
   // A word saved on a page in another tab shows here at once.
