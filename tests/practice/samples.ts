@@ -1,11 +1,11 @@
 // One well-formed line per exercise type, as the model writes them.
 export const SAMPLES: Record<string, Record<string, unknown>> = {
-  picture: { type: 'picture', instruction: 'Tap the picture for this word', word: 'le thé', en: 'tea', options: ['💧', '🍵', '☕', '🥐'], answer: '🍵', why: '*le thé* is tea.' },
-  meaning: { type: 'meaning', instruction: 'What does this mean?', word: 'le croissant', options: ['croissant', 'bread', 'cake', 'butter'], answer: 'croissant', why: '' },
+  picture: { type: 'picture', instruction: 'Tap the picture for this word', pictures: [{ emoji: '🍵', word: 'le thé', en: 'tea' }, { emoji: '💧', word: "l'eau", en: 'water' }, { emoji: '☕', word: 'le café', en: 'coffee' }, { emoji: '🥐', word: 'le croissant', en: 'croissant' }, { emoji: '🍞', word: 'le pain', en: 'bread' }] },
+  meaning: { type: 'meaning', instruction: 'What does this mean?', word: 'le pain', options: ['bread', 'croissant', 'cake', 'butter'], answer: 'bread', why: '' },
   hear_word: { type: 'hear_word', instruction: 'Tap what you hear', audio: "l'eau", en: 'water', options: ["l'eau", 'le lait', 'le thé'], answer: "l'eau", why: '' },
   pairs: { type: 'pairs', instruction: 'Match the pairs', pairs: [['le café', 'coffee'], ['le thé', 'tea'], ["l'eau", 'water'], ['le lait', 'milk'], ['le pain', 'bread']] },
   odd_one_out: { type: 'odd_one_out', instruction: "Which one doesn't belong?", options: [{ target: 'le café', en: 'coffee' }, { target: 'le thé', en: 'tea' }, { target: 'le pain', en: 'bread' }, { target: 'le lait', en: 'milk' }], answer: 'le pain', why: 'The rest are drinks.' },
-  yes_no: { type: 'yes_no', instruction: 'Does the word match the picture?', emoji: '🍞', word: 'le café', en: 'coffee', answer: false, why: '🍞 is *le pain*.' },
+  yes_no: { type: 'yes_no', instruction: 'Does the word match the picture?', pictures: [{ emoji: '🍵', word: 'le thé', en: 'tea' }, { emoji: '💧', word: "l'eau", en: 'water' }, { emoji: '☕', word: 'le café', en: 'coffee' }, { emoji: '🥐', word: 'le croissant', en: 'croissant' }, { emoji: '🍞', word: 'le pain', en: 'bread' }] },
   sort: { type: 'sort', instruction: 'Sort into le and la', groups: [{ label: 'le', en: 'masculine', items: [{ target: 'café', en: 'coffee' }, { target: 'thé', en: 'tea' }, { target: 'lait', en: 'milk' }] }, { label: 'la', en: 'feminine', items: ['limonade', 'baguette', 'tarte'] }] },
   gap: { type: 'gap', instruction: 'Fill in the blank', sentence: 'Je ___ un café, s’il vous plaît.', en: "I'd like a coffee, please.", options: ['voudrais', 'veux', 'voulez'], answer: 'voudrais', why: '*je voudrais* is polite.' },
   particles: {

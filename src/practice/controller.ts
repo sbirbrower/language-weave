@@ -1,6 +1,8 @@
 import type { Result } from '../messages';
+import { rngFrom } from '../passage/rng';
 import type { Speaker } from '../speaker';
 import type { Drills } from './drills';
+import { getExerciseType, type Picture } from './exercises';
 import { hasHint } from './hint';
 import { countResult, countShown, newCoverage, newSession, planLike, planNext, type Coverage, type Plan, type Session } from './schedule';
 import { grade, newAnswer } from './session';
@@ -67,6 +69,18 @@ export interface PracticeState {
   nextHint?: string;
   /** Where the plan is: clusters, missed points, types used (`schedule.ts`). */
   session?: Session;
+  deck?: Deck;
+}
+
+/** Pictures left from a deck the model wrote, for picture exercises with no request. */
+interface Deck {
+  pictures: Picture[];
+  /** Indexes of the pictures not yet asked about, the next first. */
+  left: number[];
+  praise: string;
+  setting: string;
+  /** Page mode: the section it's about; another section's pictures aren't used. */
+  section?: number;
 }
 
 export interface PracticeTab {
@@ -89,6 +103,9 @@ type Hint = Promise<Result<{ hint: string; usd: number | null }>>;
  * too, with what's been practised kept across sessions. Each exercise's hint
  * is written with it, so "Hint" shows it at once.
  */
+/** The lesson word a picture is for, so it's counted as practised; none if the model wrote another. */
+const deckWords = (picture: Picture, words: readonly string[]) => (words.includes(picture.word) ? [picture.word] : []);
+
 const failed = (e: unknown): Result<never> => ({ ok: false, error: e instanceof Error ? e.message : String(e) });
 
 export function practiceTab(pane: HTMLElement, deps: PracticeDeps): PracticeTab {
@@ -104,6 +121,7 @@ export function practiceTab(pane: HTMLElement, deps: PracticeDeps): PracticeTab 
   /** `upcoming` once it's written. */
   let next: Practice | undefined;
   let session = newSession();
+  let deck: Deck | undefined;
   let coverage: Coverage = newCoverage();
   /** The lesson's points and words, and its coverage, loaded once before the first plan. */
   let ready: Promise<Result<{ points: string[]; words: string[]; glosses?: Record<string, string> }>> | undefined;
@@ -247,18 +265,43 @@ export function practiceTab(pane: HTMLElement, deps: PracticeDeps): PracticeTab 
       plan = planNext(plannable, coverage, session, random, options);
     }
     if (deps.focus && plan.section === undefined) plan.section = deps.focus();
+    const fromDeck = pictured(plan, lesson.value.words);
+    if (fromDeck) {
+      askHint(fromDeck);
+      return { ok: true, value: { practice: fromDeck, usd: 0 } };
+    }
     return deps.request(plan, like).then(
       (res) => {
         if (res.ok && !stopped) {
-          res.value.practice.plan = plan;
+          const practice = res.value.practice;
+          practice.plan = plan;
+          if (practice.deck?.length) {
+            // The first picture is this exercise's; the rest come in a random order.
+            const left = rngFrom(random).sample(practice.deck.map((_, i) => i).slice(1), practice.deck.length);
+            deck = { pictures: practice.deck, left, praise: practice.praise, setting: practice.setting, section: plan.section };
+            plan.words = deckWords(practice.deck[0]!, lesson.value.words);
+          }
           deps.onSpend(res.value.usd);
-          askHint(res.value.practice);
+          askHint(practice);
         }
         return res;
       },
       failed,
     );
   }
+
+  /** A picture exercise built from the deck's next picture, if the plan is for one and the deck has any left for its section. */
+  function pictured(plan: Plan, words: readonly string[]): Practice | undefined {
+    const built = getExerciseType(plan.type)?.deck;
+    if (!built || !deck?.left.length || deck.section !== plan.section) return undefined;
+    const at = deck.left.shift()!;
+    const exercise = built.build(deck.pictures, at, rngFrom(random));
+    if (!exercise) return undefined;
+    plan.words = deckWords(deck.pictures[at]!, words);
+    const step = { ...exercise, type: plan.type, instruction: built.instruction } as Step;
+    return { step, praise: deck.praise, setting: deck.setting, plan };
+  }
+
 
   /** Forgets what this lesson has practised, here and in storage; the exercise on screen stays. */
   function reset() {
@@ -358,6 +401,7 @@ export function practiceTab(pane: HTMLElement, deps: PracticeDeps): PracticeTab 
     // A recording or a transcript on its way belongs to the tab it started in.
     if (view.answer.spoken) view.answer.spoken.status = undefined;
     if (saved.session) session = saved.session;
+    if (saved.deck) deck = saved.deck;
     // Hints already written come with the exercise; one still being written there is asked for again here.
     const known = (practice: Practice, hint: string | undefined) => {
       if (hint === undefined) return askHint(practice);
@@ -386,6 +430,7 @@ export function practiceTab(pane: HTMLElement, deps: PracticeDeps): PracticeTab 
         hint: view.practice && hintTexts.get(view.practice),
         nextHint: next && hintTexts.get(next),
         session,
+        deck,
       };
     },
     stop() {

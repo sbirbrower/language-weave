@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { seededRng } from '../../src/passage/rng';
-import { EXERCISE_TYPES, findOption, getExerciseType, levelIndex } from '../../src/practice/exercises';
+import { EXERCISE_TYPES, findOption, getExerciseType, levelIndex, pictureDeck } from '../../src/practice/exercises';
 import { buildPracticePrompt, choosePagePractice, parsePractice } from '../../src/practice/prompt';
 import { grade, newAnswer } from '../../src/practice/session';
 import type { Exercise, Step } from '../../src/practice/types';
@@ -51,6 +51,53 @@ describe('exercise types', () => {
     expect(parse({ ...SAMPLES.particles!, items: [{ ...items[0], answer: 'が' }, ...items.slice(1)] })).toBeNull();
   });
 
+  it('builds picture exercises from the deck, a word with its own emoji only when the answer is Yes', () => {
+    const deck = pictureDeck(SAMPLES.yes_no!);
+    const yesNo = getExerciseType('yes_no')!.deck!;
+    const answers = new Set<number>();
+    for (const seed of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
+      for (let at = 0; at < deck.length; at++) {
+        const e = yesNo.build(deck, at, seededRng(seed));
+        if (e?.kind !== 'choice') throw new Error('not a choice');
+        expect(e.prompt.emoji).toBe(deck[at]!.emoji);
+        expect(e.answer).toBe(e.prompt.text === deck[at]!.word ? 0 : 1);
+        answers.add(e.answer);
+      }
+    }
+    expect([...answers].sort()).toEqual([0, 1]);
+    const picture = parse(SAMPLES.picture!);
+    if (picture?.kind !== 'choice') throw new Error('not a choice');
+    expect(picture.options[picture.answer]!.emoji).toBe(deck[0]!.emoji);
+    expect(picture.options).toHaveLength(4);
+  });
+
+  it('never pairs an emoji with a word the model says it could also show', () => {
+    const deck = [
+      ...(SAMPLES.yes_no!.pictures as Array<Record<string, unknown>>),
+      { emoji: '👫', word: 'nous', en: 'we', also: ['ils'] },
+      { emoji: '👥', word: 'ils', en: 'they', also: [] },
+    ];
+    for (const seed of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
+      const yesNo = parse({ ...SAMPLES.yes_no!, pictures: [deck[5], ...deck.filter((p) => p !== deck[5])] }, seed);
+      if (yesNo?.kind !== 'choice') throw new Error('not a choice');
+      expect(yesNo.prompt.text).not.toBe('ils');
+      // Both ways: 👥 is never shown with "nous", nor 👫 offered for "ils".
+      const other = parse({ ...SAMPLES.yes_no!, pictures: [deck[6], ...deck.filter((p) => p !== deck[6])] }, seed);
+      if (other?.kind !== 'choice') throw new Error('not a choice');
+      expect(other.prompt.text).not.toBe('nous');
+      const picture = parse({ ...SAMPLES.picture!, pictures: [deck[6], ...deck.filter((p) => p !== deck[6])] }, seed);
+      if (picture?.kind !== 'choice') throw new Error('not a choice');
+      expect(picture.options.map((o) => o.emoji)).not.toContain('👫');
+    }
+  });
+
+  it('drops a deck of pictures with too few, or two that share an emoji, a word or an English', () => {
+    const deck = SAMPLES.yes_no!.pictures as Array<Record<string, string>>;
+    expect(parse({ ...SAMPLES.yes_no!, pictures: deck.slice(0, 3) })).toBeNull();
+    expect(parse({ ...SAMPLES.yes_no!, pictures: [...deck, { ...deck[0]!, word: 'la tisane' }] })).toBeNull();
+    expect(parse({ ...SAMPLES.yes_no!, pictures: [...deck, { emoji: '🫖', word: 'la tisane', en: 'tea' }] })).toBeNull();
+  });
+
   it('drops an exercise whose answer is not among its options, or whose indexes are out of range', () => {
     expect(parse({ ...SAMPLES.meaning!, answer: 'jam' })).toBeNull();
     expect(parse({ ...SAMPLES.gap!, sentence: 'No gap here.' })).toBeNull();
@@ -81,6 +128,19 @@ describe('exercise types', () => {
     a.order = ['je suis', 'allé', 'au café', 'Hier'].map(tile);
     expect(grade(step(e), a)).toBe(true);
     a.order = ['Hier', 'j’ai', 'allé', 'au café'].map(tile);
+    expect(grade(step(e), a)).toBe(false);
+  });
+
+  it('doesn’t count punctuation tiles, left out or misplaced', () => {
+    const e = parse({ ...SAMPLES.build!, answer: ['Hier', ',', 'je suis', 'allé', 'au café', '.'], also: [], extra: ['j’ai'] });
+    if (e?.kind !== 'order') throw new Error('not an order');
+    const a = newAnswer();
+    const tile = (t: string) => e.tiles.indexOf(t);
+    a.order = ['Hier', 'je suis', 'allé', 'au café'].map(tile);
+    expect(grade(step(e), a)).toBe(true);
+    a.order = ['Hier', 'je suis', ',', 'allé', 'au café', '.'].map(tile);
+    expect(grade(step(e), a)).toBe(true);
+    a.order = ['Hier', ',', 'allé', 'je suis', 'au café', '.'].map(tile);
     expect(grade(step(e), a)).toBe(false);
   });
 

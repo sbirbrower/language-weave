@@ -5,7 +5,8 @@ import type { Kit, KitPoint } from '../passage/kit';
 import { englishIn, type TeachWord } from '../passage/piece';
 import { seededRng } from '../passage/rng';
 import type { SyllabusLesson } from '../syllabus/types';
-import { getExerciseType, type ExerciseType, type Raw } from './exercises';
+import { getExerciseType, pictureDeck, type ExerciseType, type Raw } from './exercises';
+import { givesAway } from './giveaway';
 import type { Practice, Step } from './types';
 
 /**
@@ -14,7 +15,7 @@ import type { Practice, Step } from './types';
  */
 export const PRACTICE_MODEL = { model: 'claude-sonnet-5-5', effort: 'default', thinking: 'off' } as const;
 /** Bump when the prompt or an exercise's shape changes. */
-export const PRACTICE_VERSION = 'v3-focus';
+export const PRACTICE_VERSION = 'v5-hidden';
 
 /** Byte-stable; the lesson or page, the situation and the exercise asked for are in the user message. */
 export const PRACTICE_SYSTEM = 'You write exercises for a language-learning app. Follow the instructions exactly.';
@@ -210,6 +211,7 @@ Rules:
 ${practises}${likeRule}
 - All ${L} is correct, natural, standard ${L} a teacher would be happy to show; English is natural English.
 - It has exactly one right answer. Wrong options are plausible, often ${input.mode === 'lesson' ? 'the mistakes in <teaching>' : 'typical learner mistakes'}, but clearly wrong once the point is understood; never two that could both be right.
+- Answering takes knowing the point, never just reading: nothing the learner sees before answering shows the answer. An item never shows the group it's sorted into (no pronoun when sorting by person, no article when sorting by gender, no ending or letter as a group's name when the items show it: name the group by what the ending means); a partner never repeats its pair; a question or sentence never contains the answer. Unless the point is the spelling itself, nothing on the surface of the spelling decides it either: no letters, accents or characters only some of the words have, no length or capitals.
 - "answer" is copied exactly from the options. Numbers ("wrong", "answer" in a text) count from 0 unless the exercise says otherwise.
 - "instruction" is a short English instruction for the learner, at most 8 words; you may make the one shown more specific.
 - "why" is one or two short English sentences that explain the right answer, quoting the ${L}.
@@ -220,9 +222,16 @@ Output that one line of JSON and nothing else: no code fences or comments.`;
 
 /**
  * The exercise from the model's line of JSON, checked by its type and with
- * options shuffled by the seed; null if it's broken or of another type.
+ * options shuffled by the seed; null if it's broken, of another type, or
+ * gives its answer away (`givesAway`).
  */
 export function parsePractice(text: string, input: Pick<PracticeInput, 'type' | 'setting' | 'seed'>): Practice | null {
+  const practice = readPractice(text, input);
+  return practice && !givesAway(practice.step) ? practice : null;
+}
+
+/** `parsePractice` without the give-away check, for the eval to count those apart. */
+export function readPractice(text: string, input: Pick<PracticeInput, 'type' | 'setting' | 'seed'>): Practice | null {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start < 0 || end < start) return null;
@@ -241,5 +250,6 @@ export function parsePractice(text: string, input: Pick<PracticeInput, 'type' | 
     step: { ...exercise, type: type.id, instruction } as Step,
     praise: typeof raw.praise === 'string' ? raw.praise.trim() : '',
     setting: input.setting,
+    ...(type.deck ? { deck: pictureDeck(raw) } : {}),
   };
 }

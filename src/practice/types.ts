@@ -1,3 +1,4 @@
+import type { Picture } from './exercises';
 import type { Plan } from './schedule';
 
 /**
@@ -138,4 +139,6 @@ export interface Practice {
   meta?: { model: string; version: string; usd: number | null; secs?: number };
   /** What it was planned to practise (`schedule.ts`); set by the Practice tab once it's written. */
   plan?: Plan;
+  /** A picture exercise: the deck it was built from (on the first picture), for the next ones with no request. */
+  deck?: Picture[];
 }

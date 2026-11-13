@@ -36,6 +36,7 @@ export const newAnswer = (): Answer => ({ labels: new Map(), order: [], taps: ne
 export const playsOut = (step: Step) => step.kind === 'pairs' || step.kind === 'dialogue' || step.kind === 'speak';
 
 const same = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+const PUNCTUATION = /^[\p{P}\s]+$/u;
 
 /** A typed answer against the right one: case, spacing, apostrophes and end punctuation don't count; accents do. */
 export function sameSpelling(typed: string, answer: string): boolean {
@@ -53,9 +54,13 @@ export function grade(step: Step, a: Answer): boolean | undefined {
       return a.labels.size < step.items.length ? undefined : step.items.every((item, i) => a.labels.get(i) === item.label);
     case 'order': {
       if (!a.order.length || (step.layout === 'list' && a.order.length < step.tiles.length)) return undefined;
-      // By text, so two tiles that read the same are interchangeable.
-      const placed = a.order.map((i) => step.tiles[i]);
-      return step.accepted.some((o) => same(o.map((i) => step.tiles.indexOf(step.tiles[i]!)), placed.map((t) => step.tiles.indexOf(t!))));
+      // By text, so two tiles that read the same are interchangeable; punctuation tiles don't count,
+      // left out or misplaced, unless they're all there is.
+      const words = (o: number[]) => {
+        const kept = o.filter((i) => !PUNCTUATION.test(step.tiles[i]!));
+        return (kept.length ? kept : o).map((i) => step.tiles.indexOf(step.tiles[i]!));
+      };
+      return step.accepted.some((o) => same(words(o), words(a.order)));
     }
     case 'tap':
       return a.taps.size ? a.taps.has(step.answer) : undefined;

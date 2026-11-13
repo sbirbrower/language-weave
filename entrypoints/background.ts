@@ -42,6 +42,7 @@ import {
   type PracticeInput,
 } from '@/src/practice/prompt';
 import { keyCheck, keyFlagged } from '@/src/practice/key';
+import { giveawayFlagged, jevGiveaway } from '@/src/practice/giveaway';
 import { jevPairsQuestions, jevPairsState, PAIRS_THRESHOLD } from '@/src/practice/unique';
 import { buildHintPrompt, HINT_MODEL, HINT_SYSTEM, HINT_THRESHOLD, jevHintQuestions, jevHintState, parseHint, quotesAnswer } from '@/src/practice/hint';
 import { createVerifier } from '@/src/passage/verify';
@@ -333,6 +334,17 @@ async function runPractice(msg: Extract<Request, { type: 'practice' }>, tabId: n
         const checked = await trackTab(tabId, () => jevLimit(() => askJev(typesafeApiKey, JEV_MODEL, check.state, check.questions)));
         total = total === null ? null : total + checked.usd;
         if (keyFlagged(check, checked.answers)) continue;
+      } catch {
+        // Jev didn't answer: shown unchecked.
+      }
+    }
+    // A sort Jev thinks gives its answer away is written once more, and the second kept either way, like a key.
+    const away = step && typesafeApiKey && !seed.endsWith('|again') ? jevGiveaway(step, language, level) : null;
+    if (away) {
+      try {
+        const checked = await trackTab(tabId, () => jevLimit(() => askJev(typesafeApiKey, JEV_MODEL, away.state, away.questions)));
+        total = total === null ? null : total + checked.usd;
+        if (giveawayFlagged(checked.answers)) continue;
       } catch {
         // Jev didn't answer: shown unchecked.
       }

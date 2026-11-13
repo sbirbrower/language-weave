@@ -35,6 +35,20 @@ export interface ExerciseType {
   shape(L: string): string;
   /** The exercise from the model's JSON; null if it's broken. Options are shuffled with `rng`. */
   parse(raw: Raw, rng: Rng): Exercise | null;
+  /**
+   * Built by code from a deck of pictures the model writes (`pictureDeck`): the first exercise from the
+   * deck it came with, the next ones from what's left of it, with no request (`controller.ts`).
+   */
+  deck?: { instruction: string; build(deck: Picture[], at: number, rng: Rng): Exercise | null };
+}
+
+/** An emoji and the word for what it shows. */
+export interface Picture {
+  emoji: string;
+  word: string;
+  en: string;
+  /** Other words in the deck its emoji could also show (👫 for "we" and "they"), as the model wrote them. */
+  also: string[];
 }
 
 export type Stage = 'words' | 'forms' | 'texts' | 'talk';
@@ -56,7 +70,7 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const int = (v: unknown) => (typeof v === 'number' && Number.isInteger(v) ? v : typeof v === 'string' && /^\d+$/.test(v.trim()) ? Number(v) : -1);
 
 /** For comparing answers with options: no readings, case, spacing or end punctuation. */
-const loose = (s: string) =>
+export const loose = (s: string) =>
   withoutReadings(s).normalize('NFC').toLowerCase().replace(/[\s.!?。！？、,，،؟؛"'«»“”„‘’]+/gu, ' ').trim();
 
 /** Where `answer` is in `options`: exactly, or else loosely if only one matches; -1 if it isn't there. */
@@ -179,18 +193,56 @@ function paragraph(raw: Raw, fixes: boolean): { tokens: Array<{ text: string; er
   return errors.length < 1 || errors.length > 4 || tokens.length < 8 ? null : { tokens, errors, ...(str(raw.en) ? { en: str(raw.en) } : {}) };
 }
 
-const TYPES: ExerciseType[] = [
-  {
-    id: 'picture',
-    name: 'Tap the picture',
-    levels: [A1, A2],
+/** Pictures the model writes at once for picture exercises; the first one's exercise is shown, the rest come later. */
+export const DECK_SIZE = 8;
+
+/**
+ * The model's deck of pictures; [] if it's broken: fewer than four (a picture exercise has four
+ * options), or two that share an emoji, a word or an English, since then a "No" could be right.
+ */
+export function pictureDeck(raw: Raw): Picture[] {
+  const deck = recs(raw.pictures).map((r) => ({ emoji: str(r.emoji), word: str(r.word), en: str(r.en), also: strs(r.also).filter(Boolean) }));
+  const fields = (k: 'emoji' | 'word' | 'en') => distinct(deck.map((p) => p[k]));
+  return deck.length >= 4 && fields('emoji') && fields('word') && fields('en') ? deck : [];
+}
+
+const isPicture = (p: Picture) => `${p.emoji} is ${p.word} (${p.en}).`;
+
+/** Either one's emoji could show the other's word, by the model's `also`: never one shown with the other's word or emoji. */
+const overlap = (a: Picture, b: Picture) => a.also.some((w) => loose(w) === loose(b.word)) || b.also.some((w) => loose(w) === loose(a.word));
+/** The pictures that can stand against `p`: every other one whose emoji and word can't be mistaken for its. */
+const apart = (deck: Picture[], p: Picture) => deck.filter((q) => q !== p && !overlap(p, q));
+
+/**
+ * A type built from a deck of pictures: the model writes the deck, never the answer, so a word and its
+ * emoji always belong together, and a word shown with another emoji is always another picture's, one
+ * the model didn't say that emoji could also show.
+ */
+function pictureType(id: string, name: string, levels: [number, number], instruction: string, build: NonNullable<ExerciseType['deck']>['build']): ExerciseType {
+  return {
+    id,
+    name,
+    levels,
     stage: 'words',
     ask: (L) =>
-      `One ${L} word for something an emoji shows clearly; four emoji "options", one for the word ("answer", copied exactly) and three for other things from the lesson a learner might mix it up with.`,
-    shape: (L) => `{"type":"picture","instruction":"Tap the picture for this word","word":"<${L}>","en":"<English>","options":["<emoji>","<emoji>","<emoji>","<emoji>"],"answer":"<emoji>","why":"<English>"}`,
-    parse: (raw, rng) =>
-      str(raw.word) ? choice(rng, { text: str(raw.word), en: str(raw.en) }, strs(raw.options).map((emoji) => ({ text: '', emoji })), str(raw.answer), str(raw.why)) : null,
-  },
+      `${DECK_SIZE} pictures: ${L} words from the lesson, each for something one emoji shows clearly (a thing, a food, an animal, a person or people, a place, the weather), with the emoji and the word's English. Best is an emoji that fits only its own word, and no two words for the same thing. "also" lists every other word in the list the emoji could also show (👫 for both "we" and "they"), copied exactly; [] if none.`,
+    shape: (L) => `{"type":"${id}","instruction":"${instruction}","pictures":[{"emoji":"<emoji>","word":"<${L}>","en":"<English>","also":[]}]}`,
+    deck: { instruction, build },
+    parse(raw, rng) {
+      const deck = pictureDeck(raw);
+      return deck.length ? build(deck, 0, rng) : null;
+    },
+  };
+}
+
+const TYPES: ExerciseType[] = [
+  pictureType('picture', 'Tap the picture', [A1, A2], 'Tap the picture for this word', (deck, at, rng) => {
+    const shown = deck[at]!;
+    const others = rng.sample(apart(deck, shown), 3);
+    if (others.length < 3) return null;
+    const options = [shown, ...others].map((p) => ({ text: '', emoji: p.emoji }));
+    return choice(rng, { text: shown.word, en: shown.en }, options, shown.emoji, isPicture(shown));
+  }),
   {
     id: 'meaning',
     name: 'What does it mean?',
@@ -235,19 +287,15 @@ const TYPES: ExerciseType[] = [
     shape: (L) => `{"type":"odd_one_out","instruction":"Which one doesn't belong?","options":[{"target":"<${L}>","en":"<English>"}],"answer":"<${L}>","why":"<English>"}`,
     parse: (raw, rng) => choice(rng, {}, revealed(recs(raw.options)), str(raw.answer), str(raw.why)),
   },
-  {
-    id: 'yes_no',
-    name: 'Word and picture',
-    levels: [A1, A1],
-    stage: 'words',
-    ask: (L) =>
-      `One emoji and one ${L} word from the lesson; "answer" is true if the word names what the emoji shows, false if it names something else from the lesson (false about half the time). "en" is the word's English, shown once answered. "why" gives the right word for the emoji.`,
-    shape: (L) => `{"type":"yes_no","instruction":"Does the word match the picture?","emoji":"<emoji>","word":"<${L}>","en":"<English>","answer":false,"why":"<English>"}`,
-    parse(raw) {
-      if (!str(raw.word) || !str(raw.emoji) || typeof raw.answer !== 'boolean') return null;
-      return { kind: 'choice', prompt: { emoji: str(raw.emoji), text: str(raw.word), en: str(raw.en) }, options: [{ text: 'Yes' }, { text: 'No' }], answer: raw.answer ? 0 : 1, why: str(raw.why) };
-    },
-  },
+  // The word shown is the emoji's own about half the time, else another picture's.
+  pictureType('yes_no', 'Word and picture', [A1, A1], 'Does the word match the picture?', (deck, at, rng) => {
+    const pictured = deck[at]!;
+    const others = apart(deck, pictured);
+    // With no word it can't be mistaken for, it's shown with its own.
+    const match = !others.length || rng.next() < 0.5;
+    const word = match ? pictured : rng.pick(others);
+    return { kind: 'choice', prompt: { emoji: pictured.emoji, text: word.word, en: word.en }, options: [{ text: 'Yes' }, { text: 'No' }], answer: match ? 0 : 1, why: isPicture(pictured) };
+  }),
   {
     id: 'sort',
     name: 'Sort',

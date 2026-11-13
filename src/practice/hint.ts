@@ -63,6 +63,11 @@ export function describeExercise(step: Step): { exercise: string; answer: string
         exercise: [...head, ...promptText(step.prompt), `Paragraph: ${step.tokens.map((t) => t.text).join('')}`].join('\n'),
         answer: step.errors.map((e) => `${e.fix ? `${e.text} → ${e.fix}` : e.text} (${e.why})`).join('; '),
       };
+    case 'pairs':
+      return {
+        exercise: [...head, `Left: ${step.pairs.map((p) => p.left).join(' | ')}`, `Right: ${step.shuffle.map((i) => step.pairs[i]!.right).join(' | ')}`].join('\n'),
+        answer: step.pairs.map((p) => `${p.left} = ${p.right}`).join('; '),
+      };
     case 'fix':
       return {
         exercise: [...head, ...promptText(step.prompt), `Text: ${step.chunks.join(step.layout === 'list' ? '\n' : ' ')}`, `Replacements: ${step.options.join(' | ')}`].join('\n'),

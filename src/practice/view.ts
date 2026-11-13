@@ -166,7 +166,9 @@ function prompt(doc: Doc, p: Prompt, done: boolean, a: Answer, c: PracticeContro
     if (p.emoji) big.append(el(doc, 'span', 'px-emoji', p.emoji));
     // A drill on the script shows it bare, and nothing that would give its answer away, until it's answered.
     if (p.text) big.append(p.plain && !done ? plainText(doc, p.text) : fr(doc, p.text));
-    if (p.text && sayable(c, p.text) && !p.text.includes('___') && (done || (!p.plain && !p.quiet))) big.append(sayButton(doc, p.text, c));
+    // A gap is read as a pause, so the sentence can be heard before it's answered.
+    const said = p.text?.replace(/_{3,}/g, '…');
+    if (said && sayable(c, said) && (done || (!p.plain && !p.quiet))) big.append(sayButton(doc, said, c));
     out.push(big);
     if (done && p.en) out.push(el(doc, 'p', 'en', p.en));
   }

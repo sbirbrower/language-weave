@@ -211,10 +211,14 @@ ${on('script')} ruby.${ROMAN_CLASS}-j { margin-left: 0; }
 ${on('roman')} ruby.${ROMAN_CLASS} { display: inline; }
 ${on('roman')} ruby.${ROMAN_CLASS} > span { display: none; }
 ${on('roman')} ruby.${ROMAN_CLASS} > rt { display: inline; font-size: inherit; line-height: inherit; }
+/* Romanisation only: the gap between words is a space, not a margin, so a sentence can wrap. */
+${on('roman')} ruby.${ROMAN_CLASS}-j { margin-left: 0; }
+${on('roman')} ruby.${ROMAN_CLASS}-j::before { content: " "; }
 ${on('roman')} .${RTL_CLASS} { direction: ltr; }
 ${on('roman')} .${ROMAJI_CLASS} { display: inline; padding: 0 0.15em; }
 ${on('roman')} .${ROMAJI_CLASS} > span:first-child { display: none; }
-${on('roman')} .${ROMAJI_CLASS}-text { font-size: inherit; line-height: inherit; opacity: 1; }`;
+${on('roman')} .${ROMAJI_CLASS}-text { font-size: inherit; line-height: inherit; opacity: 1; }
+${on('roman')} .${ROMAJI_CLASS}::after { content: "\\200B"; }`;
 }
 
 /**

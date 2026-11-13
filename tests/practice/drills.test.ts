@@ -4,6 +4,7 @@ import { seededRng } from '../../src/passage/rng';
 import { readingsOnly, withoutReadings } from '../../src/ruby';
 import { DRILLS, silentUnits } from '../../src/practice/drills/build';
 import { DRILL_DATA, drillLessons, drillsFor } from '../../src/practice/drills';
+import { givesAway } from '../../src/practice/giveaway';
 import { retone, toneOf } from '../../src/practice/drills/pinyin';
 import { DRILL_SHARE, RECENT_EXERCISES } from '../../src/practice/plan';
 import { newCoverage, newSession, planNext } from '../../src/practice/schedule';
@@ -26,6 +27,7 @@ function buildAll(lang: string, at: number, listening = true): Step[] {
 function problems(step: Step): string[] {
   const out: string[] = [];
   if (!step.instruction || !step.drill?.name) out.push('no instruction or name');
+  if (givesAway(step)) out.push('gives its answer away');
   switch (step.kind) {
     case 'choice': {
       const keys = step.options.map((o) => o.text);

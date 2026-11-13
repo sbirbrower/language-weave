@@ -143,7 +143,7 @@ const STYLES = `${BASE_STYLES}
 .panel {
   --scale: 1;
   position: fixed; right: 16px; bottom: 16px; z-index: 2147483647;
-  width: min(calc(340px * var(--scale)), calc(100vw - 32px)); max-height: min(60vh, calc(480px * var(--scale)));
+  width: min(340px, calc(100vw - 32px)); max-height: min(60vh, 480px);
   display: flex; flex-direction: column;
   background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: 0 8px 24px var(--shadow);
@@ -154,8 +154,8 @@ const STYLES = `${BASE_STYLES}
   cursor: grab; user-select: none; touch-action: none;
 }
 .panel.dragging .bar { cursor: grabbing; }
-/* Text size: everything inside grows with it, the panel only as wide as the window allows. */
-.panel > * { zoom: var(--scale); }
+/* Text size: the content grows with it; the panel, its bar and tabs keep their size. */
+.scroll { zoom: var(--scale); }
 .size[disabled] { opacity: 0.35; cursor: default; background: none; }
 .script { width: auto; flex: none; padding: 1px 2px; font: inherit; font-size: 12px; color: var(--text); background: var(--surface); border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
 .script:hover { border-color: var(--border); }

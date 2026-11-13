@@ -72,7 +72,7 @@ describe('the Practice tab', () => {
     await vi.waitFor(() => expect(chip()).toBe('What does it mean?'));
     // The second was asked for as soon as the first was shown, and no more.
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
-    click('croissant');
+    click('bread');
     click('Check');
     expect(verdict()).toBe('✓ Bravo !');
     click('Next exercise →');
@@ -113,13 +113,33 @@ describe('the Practice tab', () => {
     expect(button('Hint')).toBeUndefined();
   });
 
+  it('builds more picture exercises from the deck written with the first, with no request', async () => {
+    // Planned as a picture exercise, so "More like this" plans another.
+    const request = vi.fn(async (plan: Plan): Promise<Answer> => {
+      if (request.mock.calls.length > 1) return ok('meaning');
+      plan.type = 'yes_no';
+      return ok('yes_no');
+    });
+    startPassage(deps(request)).ready();
+    tab('Practice').click();
+    await vi.waitFor(() => expect(chip()).toBe('Word and picture'));
+    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    const first = pane().querySelector('.px-emoji')!.textContent;
+    click('Yes');
+    click('Check');
+    click('More like this');
+    await vi.waitFor(() => expect(chip()).toBe('Word and picture'));
+    expect(pane().querySelector('.px-emoji')!.textContent).not.toBe(first);
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
   it('carries the exercise, its answer and the next one to another tab, through storage', async () => {
     const onChange = vi.fn();
     const first = startPassage({ ...deps(serve('meaning', 'pairs')), onChange });
     first.ready();
     tab('Practice').click();
     await vi.waitFor(() => expect(chip()).toBe('What does it mean?'));
-    click('croissant');
+    click('bread');
     click('Check');
     expect(onChange).toHaveBeenCalled();
     // The next one is written, so the other tab doesn't write it again.
@@ -145,14 +165,14 @@ describe('the Practice tab', () => {
     tab('Practice').click();
     await vi.waitFor(() => expect(chip()).toBe('What does it mean?'));
     expect(button('Check')!.disabled).toBe(true);
-    click('bread');
+    click('croissant');
     click('Check');
     expect(verdict()).toBe('✗ Not quite');
-    expect(pane().querySelector('.px-opt.right')!.textContent).toBe('croissant');
+    expect(pane().querySelector('.px-opt.right')!.textContent).toBe('bread');
     expect(pane().querySelector('.px-tally')!.textContent).toBe('0 / 1 right');
     click('Next exercise →');
-    await vi.waitFor(() => expect(button('croissant')).toBeDefined());
-    click('croissant');
+    await vi.waitFor(() => expect(button('bread')).toBeDefined());
+    click('bread');
     click('Check');
     expect(pane().querySelector('.px-tally')!.textContent).toBe('1 / 2 right');
   });
