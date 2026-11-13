@@ -1,3 +1,5 @@
+import { icon, type IconName } from './icons';
+import { themeCss, themed } from './theme';
 import { STATUS_TIPS, type WordStatus } from './vocab/store';
 import { WOVEN_CLASS } from './weave/segment';
 import { FR_CLASS, SHOW_SOURCE_CLASS } from './weave/write';
@@ -6,32 +8,36 @@ export const WORD_BUTTON_ATTR = 'data-tissage-say';
 
 /** How long the buttons stay after the pointer leaves the word, so they can be reached. */
 export const HIDE_DELAY_MS = 300;
-const SIZE = 22;
+const SIZE = 26;
 const GAP = 2;
+const PAD = 3;
+/** The strip's height: a button and its padding. */
+const BAR = SIZE + 2 * PAD;
 
+/** A dark strip of round buttons, as in the mock-ups: they read against any page. */
 const STYLES = `
+${themeCss(':host')}
 :host { all: initial; }
-.bar { position: fixed; z-index: 2147483646; display: flex; gap: ${GAP}px; }
+.bar {
+  position: fixed; z-index: 2147483646; display: flex; gap: ${GAP}px; padding: ${PAD}px; border-radius: 8px;
+  background: #1b2a44; box-shadow: 0 4px 14px rgb(27 42 68 / 0.25);
+}
 .bar[hidden], button[hidden] { display: none; }
 button {
-  all: unset; width: ${SIZE}px; height: ${SIZE}px; border-radius: 50%;
-  display: grid; place-items: center; cursor: pointer; font-size: 12px; line-height: 1;
-  background: #ffffff; color: #1c1c1e; box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+  all: unset; width: ${SIZE}px; height: ${SIZE}px; border-radius: 6px;
+  display: grid; place-items: center; cursor: pointer; color: #ffffff;
 }
-button:hover { background: #2f5bd3; color: #ffffff; }
-button[aria-pressed="true"] { background: #2f5bd3; color: #ffffff; }
-button:focus-visible { outline: 2px solid #2f5bd3; outline-offset: 1px; }
-@media (prefers-color-scheme: dark) {
-  button { background: #1f1f22; color: #f2f2f4; }
-  button:hover, button[aria-pressed="true"] { background: #8fb0ff; color: #10172a; }
-}
+button:hover { background: rgb(255 255 255 / 0.14); }
+button[aria-pressed="true"] { color: #1b2a44; background: #ffe58a; }
+button[data-action="know"][aria-pressed="true"] { color: #ffffff; background: #2e7d5b; }
+button:focus-visible { outline: 2px solid #ffe58a; outline-offset: 1px; }
 `;
 
 /** Where the buttons go: just after the word's last line, kept inside the window. */
-export function buttonSpot(word: { right: number; top: number; height: number }, view: { width: number; height: number }, width = SIZE) {
+export function buttonSpot(word: { right: number; top: number; height: number }, view: { width: number; height: number }, width = SIZE + 2 * PAD) {
   return {
     left: Math.min(word.right + GAP, view.width - width),
-    top: Math.max(0, Math.min(word.top + (word.height - SIZE) / 2, view.height - SIZE)),
+    top: Math.max(0, Math.min(word.top + (word.height - BAR) / 2, view.height - BAR)),
   };
 }
 
@@ -56,7 +62,7 @@ export interface WordButton {
 export function showWordButton(doc: Document, actions: WordActions): WordButton {
   removeWordButton(doc);
   const win = doc.defaultView!;
-  const host = doc.createElement('div');
+  const host = themed(doc.createElement('div'));
   host.setAttribute(WORD_BUTTON_ATTR, '');
   const root = host.attachShadow({ mode: 'open' });
   const style = doc.createElement('style');
@@ -64,16 +70,16 @@ export function showWordButton(doc: Document, actions: WordActions): WordButton 
   const bar = doc.createElement('div');
   bar.className = 'bar';
   bar.hidden = true;
-  const button = (label: string, name: string) => {
+  const button = (name: IconName, action: string) => {
     const b = doc.createElement('button');
-    b.textContent = label;
-    b.dataset.action = name;
+    b.append(icon(doc, name, 15));
+    b.dataset.action = action;
     bar.append(b);
     return b;
   };
-  const say = button('🔊', 'say');
-  const save = button('☆', 'save');
-  const know = button('✓', 'know');
+  const say = button('play', 'say');
+  const save = button('star', 'save');
+  const know = button('check', 'know');
   root.append(style, bar);
   // Outside <body>, so nothing that walks the page's content finds it.
   doc.documentElement.append(host);
@@ -94,7 +100,6 @@ export function showWordButton(doc: Document, actions: WordActions): WordButton 
 
   function drawStatus() {
     const status = word && actions.status?.(word);
-    save.textContent = status === 'saved' ? '★' : '☆';
     save.setAttribute('aria-pressed', String(status === 'saved'));
     save.setAttribute('aria-label', status === 'saved' ? `Saved: ${text()}` : `Save to learn: ${text()}`);
     save.title = status === 'saved' ? STATUS_TIPS.saved : STATUS_TIPS.save;
@@ -117,7 +122,7 @@ export function showWordButton(doc: Document, actions: WordActions): WordButton 
     if (!shown) return hide();
     say.setAttribute('aria-label', `Hear it: ${text()}`);
     drawStatus();
-    const spot = buttonSpot(last, { width: doc.documentElement.clientWidth || win.innerWidth, height: win.innerHeight }, shown * SIZE + (shown - 1) * GAP);
+    const spot = buttonSpot(last, { width: doc.documentElement.clientWidth || win.innerWidth, height: win.innerHeight }, shown * SIZE + (shown - 1) * GAP + 2 * PAD);
     bar.style.left = `${spot.left}px`;
     bar.style.top = `${spot.top}px`;
     bar.hidden = false;

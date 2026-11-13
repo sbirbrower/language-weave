@@ -9,6 +9,7 @@ export const hi: LanguageConfig = {
   code: 'hi',
   displayName: 'Hindi',
   flag: '🇮🇳',
+  greeting: 'नमस्ते',
   bcp47: 'hi-IN',
   genders: ['m', 'f'],
   grammarNotes: [

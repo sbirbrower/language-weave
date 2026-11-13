@@ -9,11 +9,15 @@
   <body>
     <main>
       <header>
-        <h1>Words</h1>
-        <label>
-          <span class="visually-hidden">Language</span>
+        <div class="titles">
+          <span class="label">language weave</span>
+          <h1>Words</h1>
+        </div>
+        <label class="language">
+          Language
           <select id="language"></select>
         </label>
+        <button type="button" id="theme" class="icon-button"></button>
       </header>
       <p class="intro">
         Every word woven into a page you've read, practised in a lesson or listened to there a few times. ☆ saves one to learn, ✓ marks one you know: on the page, in the popup or here.
@@ -40,7 +44,7 @@
         <ul id="known" class="words"></ul>
       </section>
 
-      <section aria-labelledby="seenTitle">
+      <section class="seen" aria-labelledby="seenTitle">
         <h2 id="seenTitle">Seen</h2>
         <details id="seenFold">
           <summary id="seenSummary"></summary>

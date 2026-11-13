@@ -26,11 +26,11 @@ afterEach(() => {
 describe('buttonSpot', () => {
   const view = { width: 1000, height: 800 };
   it('sits just after the word, centred on its line', () => {
-    expect(buttonSpot({ right: 160, top: 40, height: 20 }, view)).toEqual({ left: 162, top: 39 });
+    expect(buttonSpot({ right: 160, top: 40, height: 20 }, view)).toEqual({ left: 162, top: 34 });
   });
   it('stays inside the window, however many buttons', () => {
-    expect(buttonSpot({ right: 995, top: 795, height: 20 }, view)).toEqual({ left: 978, top: 778 });
-    expect(buttonSpot({ right: 995, top: 795, height: 20 }, view, 70)).toEqual({ left: 930, top: 778 });
+    expect(buttonSpot({ right: 995, top: 795, height: 20 }, view)).toEqual({ left: 968, top: 768 });
+    expect(buttonSpot({ right: 995, top: 795, height: 20 }, view, 70)).toEqual({ left: 930, top: 768 });
   });
 });
 
@@ -93,12 +93,12 @@ describe('showWordButton', () => {
     const set = vi.fn((_el: HTMLElement, s: typeof status) => (status = s));
     showWordButton(document, { set, status: () => status });
     hover(word());
-    expect(button('save').textContent).toBe('☆');
+    expect(button('save').getAttribute('aria-pressed')).toBe('false');
     expect(button('save').title).toMatch(/Save to learn/);
     expect(button('know').title).toMatch(/I know this/);
     button('save').click();
     expect(set).toHaveBeenLastCalledWith(word(), 'saved');
-    expect(button('save').textContent).toBe('★');
+    expect(button('save').getAttribute('aria-pressed')).toBe('true');
     button('save').click();
     expect(set).toHaveBeenLastCalledWith(word(), 'seen');
     button('know').click();

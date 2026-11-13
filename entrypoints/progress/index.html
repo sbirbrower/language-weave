@@ -9,16 +9,20 @@
   <body>
     <main>
       <header>
-        <h1>Progress</h1>
-        <label>
-          <span class="visually-hidden">Language</span>
+        <div class="titles">
+          <span class="label">language weave</span>
+          <h1>Progress</h1>
+        </div>
+        <label class="language">
+          Language
           <select id="language"></select>
         </label>
+        <button type="button" id="theme" class="icon-button"></button>
       </header>
       <p class="intro">From lesson mode's Practice tab: every exercise you answer counts here.</p>
 
-      <section aria-labelledby="recapTitle">
-        <h2 id="recapTitle">Recap</h2>
+      <section class="plain" aria-labelledby="recapTitle">
+        <h2 id="recapTitle" class="visually-hidden">Recap</h2>
         <p id="recapWeek" class="lead"></p>
         <p id="recapNew" class="muted"></p>
         <div id="stats" class="stats"></div>
@@ -30,9 +34,9 @@
           <div id="calendar" class="calendar" role="img"></div>
         </div>
         <p class="muted legend">
-          <span>Less</span>
+          <span>less</span>
           <span class="cell shade-0"></span><span class="cell shade-1"></span><span class="cell shade-2"></span><span class="cell shade-3"></span><span class="cell shade-4"></span>
-          <span>More</span>
+          <span>more</span>
           <span id="goal"></span>
         </p>
       </section>

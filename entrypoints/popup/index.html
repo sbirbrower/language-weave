@@ -9,43 +9,59 @@
   <body>
     <header>
       <h1>Language Weave</h1>
-      <div class="flags" id="languages" role="radiogroup" aria-label="Language"></div>
-      <div class="modes" role="radiogroup" aria-label="Mode">
-        <label><input type="radio" name="mode" value="page" /> This page</label>
-        <label><input type="radio" name="mode" value="lesson" /> Lesson</label>
+      <div class="segmented modes" role="radiogroup" aria-label="Mode">
+        <label><input type="radio" name="mode" value="page" /> page</label>
+        <label><input type="radio" name="mode" value="lesson" /> lesson</label>
       </div>
+      <button type="button" id="theme" class="icon-button"></button>
     </header>
-    <div class="settings" id="pageSettings" hidden>
-      <label for="level">Level</label>
-      <div class="level">
-        <input type="range" id="level" min="0" step="1" />
-        <div class="marks" id="levelMarks" aria-hidden="true"></div>
-      </div>
-      <label><input type="checkbox" id="weavePage" /> Weave the page</label>
+
+    <section class="field" aria-labelledby="languageLabel">
+      <span class="label" id="languageLabel">language</span>
+      <div class="tiles" id="languages" role="radiogroup" aria-labelledby="languageLabel"></div>
+    </section>
+
+    <div id="pageSettings" class="stack" hidden>
+      <section class="field" aria-labelledby="levelLabel">
+        <span class="label" id="levelLabel">level</span>
+        <div class="segmented levels" id="levels" role="radiogroup" aria-labelledby="levelLabel"></div>
+      </section>
+      <label class="switch-row">Weave the page <input type="checkbox" id="weavePage" /></label>
     </div>
-    <div class="settings" id="lessonSettings" hidden>
-      <label>
-        <span class="visually-hidden">Lesson</span>
-        <select id="lesson"></select>
+
+    <div id="lessonSettings" class="stack" hidden>
+      <section class="field" aria-labelledby="lessonLabel">
+        <span class="label" id="lessonLabel">lesson</span>
+        <div class="lessons">
+          <button type="button" id="lessonPicked" class="lesson-picked" aria-expanded="false" aria-controls="lessonList"></button>
+          <div id="lessonList" class="lesson-list" hidden></div>
+        </div>
+      </section>
+      <div class="pair" id="lessonActions">
+        <button type="button" id="markPage" class="outline green">Mark this page</button>
+        <button type="button" id="weaveWords" class="outline">Weave this page</button>
+      </div>
+      <label class="follow">
+        <input type="checkbox" id="followTabs" />
+        <span><b>Follow me to other tabs</b><small>The lesson opens by itself on the tab you switch to.</small></span>
       </label>
     </div>
-    <div class="settings" id="lessonActions" hidden>
-      <button type="button" id="markPage">Mark this page</button>
-      <button type="button" id="weaveWords">Weave this page</button>
-    </div>
+
+    <div class="stats" id="stats"></div>
     <p id="summary" role="status"></p>
     <p id="cost"></p>
     <p id="notice" hidden></p>
-    <button type="button" id="reloadExtension" hidden>Reload Language Weave</button>
+    <button type="button" id="reloadExtension" class="outline" hidden>Reload Language Weave</button>
     <div id="list"></div>
-    <footer>
-      <button type="button" id="weave" hidden>Weave this page</button>
-      <button type="button" id="restore" hidden>Restore English</button>
-      <span id="today"></span>
+
+    <button type="button" id="weave" class="primary" hidden>Weave this page</button>
+    <button type="button" id="restore" class="primary" hidden>Restore English</button>
+    <nav class="links">
       <a href="#" id="words">Words</a>
       <a href="#" id="progress">Progress</a>
+      <a href="#" id="lessons" hidden>Lessons</a>
       <a href="#" id="options">Options</a>
-    </footer>
+    </nav>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

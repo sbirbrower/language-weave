@@ -24,8 +24,20 @@ export default defineConfig({
     description: 'Weaves a language you are learning into English web pages, and teaches it.',
     // offscreen: speaking exercises record there (src/listen.ts).
     permissions: ['storage', 'activeTab', 'scripting', 'offscreen'],
-    // Every site: lesson mode's widget opens by itself on the tab the reader switches to.
-    host_permissions: ['<all_urls>'],
+    // The APIs the background calls: src/providers/, src/speech.ts, src/listen.ts, src/marks/jev.ts.
+    host_permissions: [
+      'https://api.anthropic.com/*',
+      'https://api.openai.com/*',
+      'https://generativelanguage.googleapis.com/*',
+      'https://texttospeech.googleapis.com/*',
+      'https://api.deepinfra.com/*',
+      'https://api.typesafe.ai/*',
+    ],
+    // Every site, asked for when the reader picks lesson mode (src/follow.ts), so its widget opens by itself
+    // on the tab they switch to. Without it, Language Weave runs only on tabs it's clicked on (activeTab).
+    optional_host_permissions: ['<all_urls>'],
+    // The widget's fonts (src/theme.ts), loaded from the page it's drawn on.
+    web_accessible_resources: [{ resources: ['fonts/*.woff2'], matches: ['<all_urls>'] }],
     commands: {
       'weave-page': {
         suggested_key: { default: 'Alt+Shift+W' },

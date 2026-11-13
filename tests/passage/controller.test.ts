@@ -117,7 +117,7 @@ describe('startPassage, page mode', () => {
     const d = deps();
     startPassage(d).ready();
     await vi.advanceTimersByTimeAsync(0);
-    button('↻ New passage')!.click();
+    button('New passage')!.click();
     await vi.advanceTimersByTimeAsync(0);
     const calls = vi.mocked(d.request).mock.calls.map((c) => c[0]);
     expect(calls.map((c) => c.focus)).toEqual([0, 0]);
@@ -147,7 +147,7 @@ describe('startPassage, page mode', () => {
     await scrollTo(1);
     await scrollTo(2);
     expect(request).toHaveBeenCalledTimes(1);
-    expect(button('↻ New passage')).toBeUndefined();
+    expect(button('New passage')).toBeUndefined();
     finish();
     await vi.advanceTimersByTimeAsync(0);
     expect(request.mock.calls.map((c) => c[0].focus)).toEqual([0, 2]);
@@ -160,7 +160,7 @@ describe('startPassage, page mode', () => {
     p.ready();
     await vi.advanceTimersByTimeAsync(0);
     expect(pane().textContent).toContain('No key');
-    expect(button('↻ New passage')).toBeDefined();
+    expect(button('New passage')).toBeDefined();
     p.stop();
     expect(shadow()).toBeUndefined();
     await scrollTo(1);
@@ -320,10 +320,10 @@ describe('speech', () => {
     buttons('.listen')[0]!.click();
     expect(f.speech.play).toHaveBeenLastCalledWith(['Un.', 'Deux.'], expect.any(Function), expect.any(Function));
     f.line(0);
-    expect(buttons('.listen')[0]!.textContent).toBe('■ Stop');
+    expect(buttons('.listen')[0]!.textContent).toBe('Stop');
     buttons('.listen')[0]!.click();
     expect(f.speech.stop).toHaveBeenCalled();
-    expect(buttons('.listen')[0]!.textContent).toBe('▶ Listen');
+    expect(buttons('.listen')[0]!.textContent).toBe('Play all');
   });
 
   it('shows a speech error under the piece, and stops reading on another section', async () => {

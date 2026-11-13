@@ -12,6 +12,7 @@ export const ar: LanguageConfig = {
   code: 'ar',
   displayName: 'Arabic',
   flag: '🇸🇦',
+  greeting: 'مرحبا',
   bcp47: 'ar',
   // Google's one Arabic voice is "Arabic (Generic)", ar-XA; ar is the page's lang and Whisper's language.
   speechLocale: 'ar-XA',

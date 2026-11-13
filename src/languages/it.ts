@@ -4,6 +4,7 @@ export const it: LanguageConfig = {
   code: 'it',
   displayName: 'Italian',
   flag: '🇮🇹',
+  greeting: 'Ciao',
   bcp47: 'it-IT',
   genders: ['m', 'f'],
   grammarNotes: [

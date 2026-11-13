@@ -5,6 +5,7 @@ export const pt: LanguageConfig = {
   // "Brazilian" in every prompt, so the model doesn't drift into Portugal's words and spelling.
   displayName: 'Brazilian Portuguese',
   flag: '🇧🇷',
+  greeting: 'Olá',
   bcp47: 'pt-BR',
   genders: ['m', 'f'],
   grammarNotes: [

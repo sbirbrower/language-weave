@@ -20,6 +20,8 @@ export interface MarkDeps {
   request(chunk: MarkChunk, onMark: (mark: ShownMark) => void): Promise<Result<{ usd: number | null }>>;
   onSpend(usd: number | null): void;
   onError?(error: string): void;
+  /** A mark was drawn on the page. */
+  onMarked?(): void;
 }
 
 export interface Marker {
@@ -60,7 +62,7 @@ export function startMarks(deps: MarkDeps): Marker {
     marked.add(i);
     const draw = (mark: ShownMark) => {
       const seg = chunk.paras[mark.at];
-      if (!stopped && seg) applyMark(seg, mark, deps.lang);
+      if (!stopped && seg && applyMark(seg, mark, deps.lang)) deps.onMarked?.();
     };
     const failed = (error: string) => {
       marked.delete(i);

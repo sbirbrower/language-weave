@@ -10,6 +10,7 @@ export const ru: LanguageConfig = {
   code: 'ru',
   displayName: 'Russian',
   flag: '🇷🇺',
+  greeting: 'Привет',
   bcp47: 'ru-RU',
   genders: ['m', 'f', 'n'],
   grammarNotes: [

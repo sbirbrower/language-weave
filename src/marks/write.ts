@@ -8,24 +8,20 @@ import type { ShownMark } from './stream';
 export const MARK_CLASS = `${WOVEN_CLASS}-mark`;
 export { GLOSS_CLASS };
 
-/** Point colours repeat after this many. */
+/** Points are numbered in slots that repeat after this many (`data-tissage-point`), so a page's marks can tell them apart. */
 const HUES = 6;
 
-/** For the page's stylesheet: the English underlined in its point's colour, the gloss after it in brackets. */
+/** For the page's stylesheet: the English underlined in green dots, the gloss after it in green italics, in brackets. */
 export const MARK_STYLES = `
-.${MARK_CLASS} { cursor: pointer; text-decoration: underline 2px; text-underline-offset: 0.22em; text-decoration-color: var(--tissage-hue); }
-.${GLOSS_CLASS} {
-  cursor: pointer; margin-left: 0.25em; padding: 0 0.3em; border-radius: 0.3em; font-size: 0.88em; font-style: normal;
-  color: var(--tissage-hue); background: var(--tissage-tint);
+.${MARK_CLASS} {
+  cursor: pointer; text-decoration: underline dotted 2px; text-underline-offset: 0.24em; text-decoration-color: var(--tissage-mark);
+  --tissage-mark: #2e7d5b;
 }
+.${GLOSS_CLASS} { cursor: pointer; margin-left: 0.25em; font-size: 0.92em; font-style: italic; font-weight: 500; color: #2e7d5b; }
 .${GLOSS_CLASS}::before { content: "("; } .${GLOSS_CLASS}::after { content: ")"; }
-${['#b4462f', '#2f6f8a', '#5f7a14', '#8a4a8f', '#a86b12', '#3d7a5c']
-  .map((hue, i) => `[data-tissage-point="${i + 1}"] { --tissage-hue: ${hue}; --tissage-tint: color-mix(in srgb, ${hue} 12%, transparent); }`)
-  .join('\n')}
 @media (prefers-color-scheme: dark) {
-${['#f0937c', '#7fc3dd', '#b9cf6a', '#d39ad8', '#e8b45e', '#84cfa8']
-  .map((hue, i) => `  [data-tissage-point="${i + 1}"] { --tissage-hue: ${hue}; --tissage-tint: color-mix(in srgb, ${hue} 18%, transparent); }`)
-  .join('\n')}
+  .${MARK_CLASS} { --tissage-mark: #6fcf9f; }
+  .${GLOSS_CLASS} { color: #6fcf9f; }
 }
 `;
 

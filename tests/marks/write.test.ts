@@ -80,7 +80,7 @@ describe('the mark popup', () => {
     expect(click.defaultPrevented).toBe(true);
     const pop = document.querySelector(`[${MARK_POPUP_ATTR}]`)!.shadowRoot!.querySelector<HTMLElement>('.pop')!;
     expect(pop.hidden).toBe(false);
-    expect([...pop.querySelectorAll('div')].map((d) => d.textContent)).toEqual(['Guillaume🔊', 'Guillaume', 'William', 'Point 3: point 3']);
+    expect([...pop.querySelectorAll('div')].map((d) => d.textContent)).toEqual(['Guillaume', 'Guillaume', 'William', 'point 3']);
     pop.querySelector('button')!.click();
     expect(said).toEqual(['Guillaume']);
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));

@@ -164,7 +164,7 @@ function startWorking(session: Session, usable: readonly ExerciseType[], weights
 
 function pickType(lesson: Plannable, coverage: Coverage, session: Session, random: () => number, options: ScheduleOptions): string {
   const level = levelIndex(lesson.level);
-  const fits = (t: ExerciseType) => fitsLevel(t, level) && fitsLang(t, lesson.lang);
+  const fits = (t: ExerciseType) => !t.off && fitsLevel(t, level) && fitsLang(t, lesson.lang);
   const usable = EXERCISE_TYPES.filter((t) => fits(t) && (options.listening || !t.listening) && !t.speaking);
   const recent = new Set(session.recent.slice(-RECENT_EXERCISES));
   const speakable = options.speaking ? EXERCISE_TYPES.filter((t) => t.speaking && fits(t) && !recent.has(t.id)) : [];

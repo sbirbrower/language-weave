@@ -1,5 +1,7 @@
 import { setDirection } from '../direction';
+import { iconButton } from '../icons';
 import { rubyNodes, scriptStyles, withoutReadings } from '../ruby';
+import { LABEL_CSS, themeCss, themed } from '../theme';
 import { markFor } from './write';
 
 export const MARK_POPUP_ATTR = 'data-tissage-mark-popup';
@@ -9,30 +11,29 @@ const GAP = 6;
 const EDGE = 8;
 
 const STYLES = `
+${themeCss(':host')}
 :host { all: initial; }
 .pop {
   --scale: 1;
   position: fixed; z-index: 2147483646; box-sizing: border-box; width: max-content; max-width: min(calc(${WIDTH}px * var(--scale)), calc(100vw - ${2 * EDGE}px));
-  padding: 10px 12px; border-radius: 10px; background: #ffffff; color: #1c1c1e; box-shadow: 0 6px 24px rgb(0 0 0 / 0.22);
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding: 12px 14px; border-radius: 10px; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); box-shadow: 0 10px 26px var(--shadow);
+  font: 14px/1.45 var(--font);
 }
 .pop[hidden] { display: none; }
 /* The widget's text size. */
 .pop > * { zoom: var(--scale); }
-.row { display: flex; align-items: baseline; gap: 8px; }
-.target { font-weight: 650; font-size: 15px; }
-.english, .point { color: #6b665e; }
-.point { font-size: 12px; margin-top: 4px; }
+.row { display: flex; align-items: flex-start; gap: 10px; }
+.row > .target { flex: 1; }
+.target { font-weight: 600; font-size: 16px; }
+.english { color: var(--muted); font-size: 12.5px; }
+.point { ${LABEL_CSS} font-size: 13.5px; color: var(--green); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 button {
-  all: unset; cursor: pointer; flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px;
+  all: unset; cursor: pointer; flex: none; order: -1; width: 26px; height: 26px; border-radius: 13px; display: grid; place-items: center;
+  color: var(--green); background: var(--green-soft);
 }
-button:hover { background: #2f5bd3; color: #ffffff; }
-button:focus-visible { outline: 2px solid #2f5bd3; outline-offset: 1px; }
-@media (prefers-color-scheme: dark) {
-  .pop { background: #1f1f22; color: #f2f2f4; }
-  .english, .point { color: #a39d93; }
-  button:hover { background: #8fb0ff; color: #10172a; }
-}
+button:hover { background: var(--green); color: var(--on-green); }
+button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 ${scriptStyles(true)}
 `;
 
@@ -59,7 +60,7 @@ export interface MarkPopup {
 export function showMarkPopup(doc: Document, say?: (text: string) => void, textScale?: () => number, can?: (text: string) => boolean): MarkPopup {
   removeMarkPopup(doc);
   const win = doc.defaultView!;
-  const host = doc.createElement('div');
+  const host = themed(doc.createElement('div'));
   host.setAttribute(MARK_POPUP_ATTR, '');
   const root = host.attachShadow({ mode: 'open' });
   const style = doc.createElement('style');
@@ -81,15 +82,13 @@ export function showMarkPopup(doc: Document, say?: (text: string) => void, textS
   };
 
   function open(mark: HTMLElement) {
-    const { target = '', pointLabel = '', pointNumber = '' } = mark.dataset;
+    const { target = '', pointLabel = '' } = mark.dataset;
     const gloss = mark.nextElementSibling as HTMLElement | null;
     const head = doc.createElement('div');
     head.className = 'row';
     head.append(line('target', target, gloss?.lang || undefined));
     if (say && target && (can?.(target) ?? true)) {
-      const button = doc.createElement('button');
-      button.textContent = '🔊';
-      button.setAttribute('aria-label', `Listen slowly: ${withoutReadings(target)}`);
+      const button = iconButton(doc.createElement('button'), 'play', `Listen slowly: ${withoutReadings(target)}`, 10);
       button.addEventListener('click', (e) => {
         e.stopPropagation();
         say(target);
@@ -99,7 +98,7 @@ export function showMarkPopup(doc: Document, say?: (text: string) => void, textS
     pop.replaceChildren(
       head,
       line('english', mark.textContent ?? ''),
-      ...(pointLabel ? [line('point', `Point ${pointNumber}: ${pointLabel}`)] : []),
+      ...(pointLabel ? [line('point', pointLabel)] : []),
     );
     pop.style.setProperty('--scale', String(textScale?.() ?? 1));
     pop.setAttribute('aria-label', withoutReadings(target));

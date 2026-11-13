@@ -16,6 +16,10 @@ export interface PassageDeps {
   mode: PieceMode;
   /** In the widget's bar: the page's or the lesson's title. */
   title: string;
+  /** Before the title: the lesson's level, or the language woven into the page. */
+  kicker?: string;
+  /** The reader switched between light and dark in the widget's bar. */
+  onTheme?: WidgetOptions['onTheme'];
   /**
    * Page mode: the section on screen now (`sectionOnScreen`). `key` names its text, for a page whose
    * sections change as it loads more (the same index another text); none = the index.
@@ -82,6 +86,8 @@ export interface PassageWidget {
   state(): PassageState;
   /** Page mode: the page's text changed without a scroll (pages turned, more loaded); write about what's on screen now. */
   refocus(): void;
+  /** Beside the title once minimised: what's waiting on the page; '' = nothing. */
+  setBadge(text: string, label?: string): void;
   stop(): void;
 }
 
@@ -143,6 +149,8 @@ export function startPassage(deps: PassageDeps): PassageWidget {
   let collapsed = Boolean(deps.saved?.collapsed);
   const widget = showWidget(deps.doc, {
     title: deps.title,
+    kicker: deps.kicker,
+    onTheme: deps.onTheme,
     tabs: tabs.length > 1 ? tabs : undefined,
     tab,
     collapsed,
@@ -242,6 +250,13 @@ export function startPassage(deps: PassageDeps): PassageWidget {
       },
     );
   }
+  /** An example sentence, at speed. */
+  function sayText(text: string) {
+    speech!.play([text], () => {}, (error) => {
+      view = { ...view, note: error };
+      render();
+    });
+  }
   /** One word, slowly; it stops any line playing, which clears that line's highlight. */
   function sayWord(text: string) {
     deps.onWordSaid?.(text);
@@ -286,7 +301,11 @@ export function startPassage(deps: PassageDeps): PassageWidget {
         if (stopped) return;
         textbook = 'shown';
         deps.onSpend(res.value.usd);
-        fillTextbook(lessonPane, res.value.textbook, speech && sayWord, speech?.can);
+        fillTextbook(lessonPane, res.value.textbook, {
+          say: speech && ((text, slow) => (slow ? sayWord(text) : sayText(text))),
+          can: speech?.can,
+          onPractise: deps.practice ? () => widget.showTab('practice') : undefined,
+        });
       },
       (e) => failed(e instanceof Error ? e.message : String(e)),
     );
@@ -398,6 +417,7 @@ export function startPassage(deps: PassageDeps): PassageWidget {
     refocus() {
       if (follows) update();
     },
+    setBadge: (text, label) => widget.setBadge(text, label),
     stop,
   };
 }

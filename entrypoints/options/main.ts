@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { setTheme, startPageTheme } from '@/src/pageTheme';
 import type { ResponseFor } from '@/src/messages';
 import { modelsFor, PROVIDER_NAMES, type ModelTier, type OtherProvider, type ProviderModels } from '@/src/providers/route';
 import { thinkingOff } from '@/src/providers/thinking';
@@ -6,6 +7,9 @@ import type { ChatProvider } from '@/src/providers/types';
 import { getLanguage } from '@/src/languages';
 import { lessonsFor } from '@/src/lessons';
 import { getSettings, saveSettings, type Effort, type Thinking } from '@/src/settings';
+import type { Theme } from '@/src/theme';
+
+startPageTheme();
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -77,8 +81,13 @@ function showDensity() {
   densityValue.textContent = `${density.value}%`;
 }
 
+const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
+// The theme changes at once, without Save: it's only how things look.
+for (const input of themeInputs) input.addEventListener('change', () => void setTheme(input.value as Theme));
+
 async function init() {
   const s = await getSettings();
+  for (const input of themeInputs) input.checked = input.value === s.theme;
   provider.value = s.provider;
   apiKey.value = s.anthropicApiKey;
   for (const o of others) {

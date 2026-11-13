@@ -9,6 +9,7 @@ export const ja: LanguageConfig = {
   code: 'ja',
   displayName: 'Japanese',
   flag: '🇯🇵',
+  greeting: 'こんにちは',
   bcp47: 'ja-JP',
   genders: [],
   grammarNotes: [

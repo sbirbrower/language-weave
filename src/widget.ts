@@ -5,6 +5,8 @@ import { italicSpans } from './passage/textbook';
 import type { ReadingLine } from './reading/formats';
 import { setDirection } from './direction';
 import { readingsOnly, rubyNodes, SCRIPT_VIEWS, scriptStyles, withoutReadings, type ScriptView } from './ruby';
+import { icon, iconButton } from './icons';
+import { LABEL_CSS, setPageTheme, THEME_ATTR, themeCss, themed, type Theme } from './theme';
 
 /**
  * A small panel fixed to the corner of the screen, so it stays in view as the
@@ -14,6 +16,10 @@ import { readingsOnly, rubyNodes, SCRIPT_VIEWS, scriptStyles, withoutReadings, t
  */
 export interface WidgetOptions {
   title: string;
+  /** Before the title, in the bar: the lesson's level, or the language woven into the page. */
+  kicker?: string;
+  /** The reader switched between light and dark from the bar; none = no switch. */
+  onTheme?(theme: Theme): void;
   /** Reading formats to choose from; the picker is for trying them out. None = no picker. */
   formats?: Array<{ id: string; label: string }>;
   selected?: string;
@@ -101,29 +107,36 @@ export interface Widget {
   setTitle(title: string): void;
   /** A tab's pane, to fill with `fillLines`, `fillTextbook` or `fillPractice`. */
   pane(id: string): HTMLElement;
+  /** Opens a tab, as a click on it would. */
+  showTab(id: string): void;
+  /** Beside the title once minimised: what's waiting on the page (the marks); '' = nothing. */
+  setBadge(text: string, label?: string): void;
 }
 
 export const WIDGET_ATTR = 'data-tissage-widget';
 
-/** Colours, buttons and reading lines, shared with the highlight notes (`notes.ts`). */
+/** Colours, type, buttons and reading lines, shared with the highlight notes (`notes.ts`). */
 export const BASE_STYLES = `
-:host {
-  all: initial;
-  --bg: #ffffff; --fg: #1c1c1e; --muted: #6b6b70; --border: #d8d8dc; --accent: #2f5bd3; --on-accent: #ffffff;
-}
-@media (prefers-color-scheme: dark) {
-  :host { --bg: #1f1f22; --fg: #f2f2f4; --muted: #a0a0a8; --border: #3a3a40; --accent: #8fb0ff; --on-accent: #10172a; }
-}
+${themeCss(':host')}
+:host { all: initial; }
 button {
-  all: unset; cursor: pointer; width: 24px; height: 24px; border-radius: 6px;
-  display: grid; place-items: center; color: var(--muted); font-size: 16px; line-height: 1;
+  all: unset; cursor: pointer; width: 28px; height: 28px; border-radius: 6px; box-sizing: border-box;
+  display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1;
 }
-button:hover { background: rgb(127 127 127 / 0.15); color: var(--fg); }
-button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button:hover { background: var(--primary-soft); color: var(--text); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .line { display: grid; }
 .fr { font-weight: 500; }
 .en { color: var(--muted); font-size: 12.5px; }
 .note { margin: 0; color: var(--muted); font-size: 13px; }
+.label { ${LABEL_CSS} }
+/* A round play button, in green: every sentence and word that can be heard has one. */
+.say, .say-word {
+  width: 24px; height: 24px; border-radius: 12px; flex: none; color: var(--green); background: var(--green-soft);
+}
+.say:hover, .say-word:hover { background: var(--green); color: var(--on-green); }
+.say[aria-pressed="true"], .line.playing > .say { background: var(--green); color: var(--on-green); }
+.say-word { width: 22px; height: 22px; border-radius: 11px; display: inline-grid; vertical-align: middle; margin-inline-end: 4px; }
 `;
 
 const STYLES = `${BASE_STYLES}
@@ -132,34 +145,40 @@ const STYLES = `${BASE_STYLES}
   position: fixed; right: 16px; bottom: 16px; z-index: 2147483647;
   width: min(calc(340px * var(--scale)), calc(100vw - 32px)); max-height: min(60vh, calc(480px * var(--scale)));
   display: flex; flex-direction: column;
-  background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px var(--shadow);
+  font: 14px/1.45 var(--font);
 }
 .bar {
-  display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 2px; padding: 6px 6px 6px 14px; border-bottom: 1px solid var(--line);
   cursor: grab; user-select: none; touch-action: none;
 }
 .panel.dragging .bar { cursor: grabbing; }
 /* Text size: everything inside grows with it, the panel only as wide as the window allows. */
 .panel > * { zoom: var(--scale); }
-.size { width: auto; padding: 0 5px; font-size: 13px; font-weight: 600; }
 .size[disabled] { opacity: 0.35; cursor: default; background: none; }
-.script { width: auto; flex: none; padding: 1px 2px; font-size: 12px; border-color: transparent; cursor: pointer; }
+.script { width: auto; flex: none; padding: 1px 2px; font: inherit; font-size: 12px; color: var(--text); background: var(--surface); border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
 .script:hover { border-color: var(--border); }
-.title { flex: 1; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.heading { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: baseline; overflow: hidden; white-space: nowrap; ${LABEL_CSS} font-size: 14px; color: var(--muted); }
+.kicker::after { content: "/"; margin-left: 6px; color: var(--faint); }
+.title { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.badge {
+  flex: none; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; display: none; place-items: center;
+  background: var(--green); color: var(--on-green); font: 700 11px/1 var(--font);
+}
+.panel.collapsed .badge:not(:empty) { display: inline-grid; }
 .picker { padding: 8px 12px 0; }
 select {
-  width: 100%; font: inherit; font-size: 13px; color: var(--fg); background: var(--bg);
+  width: 100%; font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px;
 }
-.tabs { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; gap: 16px; padding: 2px 14px 0; border-bottom: 1px solid var(--line); }
 .tab {
-  width: auto; height: auto; padding: 6px 8px; border-radius: 0; font-size: 12.5px; font-weight: 500;
+  width: auto; height: auto; padding: 6px 0; border-radius: 0; ${LABEL_CSS} font-size: 14px; color: var(--muted);
   border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
-.tab:hover { background: none; }
-.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:hover { background: none; color: var(--text); }
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--primary); }
 .scroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 .grip {
   position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none;
@@ -176,125 +195,114 @@ select {
 .edge.sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
 .grip { z-index: 2; }
 .scroll[hidden] { display: none; }
-.body { padding: 10px 12px 12px; display: grid; gap: 8px; }
-.panel.collapsed { width: auto !important; height: auto !important; }
+.body { padding: 12px 14px 14px; display: grid; gap: 10px; }
+/* Minimised: a pill in the corner, with what's waiting on the page (marks) beside the title. */
+.panel.collapsed { width: auto !important; height: auto !important; max-width: min(340px, calc(100vw - 32px)); border-radius: 999px; }
+.panel.collapsed .bar { border-bottom: 0; padding: 4px 4px 4px 14px; gap: 6px; }
 .panel.collapsed .grip, .panel.collapsed .edge { display: none; }
-.panel.collapsed .scroll, .panel.collapsed .picker, .panel.collapsed .tabs { display: none; }
-:host {
-  --tl: #1d7a55; --soft: rgb(47 91 211 / 0.07); --card: rgb(127 127 127 / 0.05);
-  --warn-bg: #fff6e5; --warn-edge: #e3a008; --warn-fg: #8a5300;
-}
-@media (prefers-color-scheme: dark) {
-  :host { --tl: #6fd6a6; --soft: rgb(143 176 255 / 0.1); --card: rgb(255 255 255 / 0.04);
-    --warn-bg: rgb(227 160 8 / 0.12); --warn-edge: #e3a008; --warn-fg: #f2c25c; }
-}
-.tb { gap: 10px; }
+.panel.collapsed .scroll, .panel.collapsed .picker, .panel.collapsed .tabs,
+.panel.collapsed .size, .panel.collapsed .theme, .panel.collapsed .script { display: none; }
+.tb { gap: 14px; font-size: 13.5px; line-height: 1.5; }
 .tb p { margin: 0; }
-.tb i { color: var(--tl); font-weight: 500; }
-.tb .intro {
-  font-size: 13.5px; padding: 8px 10px; border-radius: 8px;
-  background: var(--soft); border-left: 3px solid var(--accent);
+.tb i { font-style: italic; font-weight: 500; color: var(--green); }
+.tb .intro { padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+.toc { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.toc button {
+  width: auto; height: auto; max-width: 9.5em; padding: 1px 7px; border-radius: 4px; ${LABEL_CSS} font-size: 13px; color: var(--muted);
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.tb .sec {
-  display: grid; gap: 6px; padding: 9px 10px 10px; border-radius: 8px;
-  background: var(--card); border: 1px solid var(--border);
-}
-.tb h4 { margin: 0; font-size: 14px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+.toc button:hover, .toc button[aria-current="true"] { background: var(--hl); color: var(--text); }
+.tb .sec { display: grid; gap: 8px; }
+.tb h4 { margin: 0; font-size: 15px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
 .tb .num {
-  flex: none; min-width: 18px; height: 18px; border-radius: 9px; display: inline-grid; place-items: center;
-  font-size: 11px; font-weight: 700; background: var(--accent); color: var(--on-accent);
+  flex: none; width: 20px; height: 20px; border-radius: 10px; display: inline-grid; place-items: center;
+  font-size: 11px; font-weight: 700; background: var(--primary); color: var(--on-primary);
 }
 .tb h4 > span:nth-child(2) { flex: 1; }
-.tb .kind {
-  flex: none; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 1px 6px; border-radius: 4px; color: var(--muted); border: 1px solid var(--border);
-}
-.tb .kind.words, .tb .kind.phrases { color: var(--tl); }
+.tb .kind { flex: none; ${LABEL_CSS} font-size: 13px; font-weight: 700; padding: 0 7px; border-radius: 4px; color: var(--muted); border: 1px solid var(--border); }
+.tb .kind.words, .tb .kind.phrases { color: var(--green); background: var(--green-soft); border-color: transparent; }
 .tb table {
-  display: block; width: fit-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 12.5px;
-  border-radius: 6px; border: 1px solid var(--border);
+  display: block; width: fit-content; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 13px;
+  border-radius: 6px; border: 1px solid var(--line);
 }
-.tb th, .tb td { text-align: start; padding: 4px 10px; vertical-align: top; }
-.tb th { font-weight: 600; color: var(--accent); background: var(--soft); border-bottom: 1px solid var(--border); }
-.tb tr:nth-child(odd) td { background: var(--card); }
-.tb .examples { display: grid; gap: 5px; padding: 2px 0 2px 10px; border-left: 3px solid var(--tl); }
-.tb .examples .fr { color: var(--tl); }
-.tb .watch {
-  font-size: 13px; padding: 7px 9px; border-radius: 6px; display: grid; gap: 3px;
-  background: var(--warn-bg); border-left: 3px solid var(--warn-edge);
-}
-.tb .watch b { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn-fg); }
-.tb .words { display: grid; grid-template-columns: fit-content(60%) minmax(0, 1fr); gap: 3px 12px; margin: 0; }
+.tb th, .tb td { text-align: start; padding: 5px 10px; vertical-align: top; }
+.tb th { ${LABEL_CSS} font-weight: 700; font-size: 14px; color: var(--primary); background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.tb tr:nth-child(odd) td { background: var(--surface-2); }
+.tb .examples { display: grid; gap: 6px; padding: 8px 10px; border-radius: 8px; background: var(--green-tint); }
+.tb .examples::before { content: "examples"; ${LABEL_CSS} font-size: 13px; color: var(--green); }
+.tb .examples .fr { font-weight: 500; }
+.tb .watch { padding: 8px 10px; border-radius: 8px; display: grid; gap: 2px; background: var(--warn-bg); }
+.tb .watch b { ${LABEL_CSS} font-size: 13.5px; font-weight: 700; color: var(--warn-ink); }
+.tb .words { display: grid; grid-template-columns: fit-content(60%) minmax(0, 1fr); gap: 0 12px; margin: 0; }
 /* Block, not flex: in a flex row each text run and <ruby> is its own item, and the row can't wrap mixed scripts. */
-.tb dt { font-weight: 500; color: var(--tl); min-width: 0; overflow-wrap: anywhere; }
-.say-word { display: inline-grid; vertical-align: middle; margin-inline-end: 2px; width: 22px; height: 22px; font-size: 12px; }
-.tb dd { margin: 0; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.tb dt, .tb dd { padding: 4px 0; border-bottom: 1px solid var(--line); min-width: 0; overflow-wrap: anywhere; }
+.tb dt { font-weight: 600; }
+.tb dd { margin: 0; color: var(--muted); }
+.tb .practise { justify-self: start; width: auto; height: auto; padding: 7px 14px; border-radius: 8px; background: var(--green); color: var(--on-green); font-size: 12.5px; }
+.tb .practise:hover { background: var(--green); color: var(--on-green); filter: brightness(1.08); }
 .wl { list-style: none; margin: 0; padding: 0; }
-.wl li { display: flex; gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.wl li { display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .wl li:last-child { border-bottom: 0; }
-.wl .body { flex: 1; min-width: 0; }
-.wl .head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+.wl .body { flex: 1; min-width: 0; padding: 0; display: block; }
+.wl .head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
 .wl .word { font-weight: 600; }
-.wl .say { display: inline-grid; vertical-align: middle; width: 22px; height: 22px; font-size: 12px; margin-inline-start: 2px; }
+.wl .say { width: 22px; height: 22px; border-radius: 11px; }
 .wl p { margin: 2px 0 0; overflow-wrap: anywhere; }
 .wl .definition, .wl .english { color: var(--muted); font-size: 12.5px; }
-.wl .example { margin-top: 4px; }
+.wl .example { margin-top: 4px; display: flex; gap: 6px; align-items: flex-start; font-style: italic; font-size: 13px; }
 .wl .actions { display: flex; gap: 2px; align-items: flex-start; }
-.wl .toggle[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
-.panel.collapsed .bar { border-bottom: 0; }
+.toggle { color: var(--faint); }
+.toggle[aria-pressed="true"] { color: var(--primary); background: var(--primary-soft); }
+.toggle.known[aria-pressed="true"] { color: var(--on-green); background: var(--green); }
 .listen {
-  justify-self: start; width: auto; height: auto; padding: 3px 10px 3px 8px; gap: 6px; display: inline-flex; align-items: center;
-  border: 1px solid var(--border); border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--accent);
+  justify-self: end; width: auto; height: auto; padding: 2px 4px; gap: 6px; display: inline-flex; align-items: center;
+  font-size: 12.5px; font-weight: 600; color: var(--green);
 }
-.listen[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.line.speakable { grid-template-columns: auto 1fr; column-gap: 6px; }
-.line.speakable > .say { grid-row: span 2; width: 22px; height: 22px; font-size: 10px; color: var(--accent); }
-.line.playing .fr { color: var(--accent); }
-.line.playing > .say { background: var(--accent); color: var(--on-accent); }
-:host { --ok: #1d7a55; --ok-bg: rgb(29 122 85 / 0.12); --bad: #b3261e; --bad-bg: rgb(179 38 30 / 0.1); }
-@media (prefers-color-scheme: dark) {
-  :host { --ok: #6fd6a6; --ok-bg: rgb(111 214 166 / 0.14); --bad: #ff8a80; --bad-bg: rgb(255 138 128 / 0.12); }
-}
-.head { display: grid; gap: 2px; }
-.chip {
-  justify-self: start; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--accent); background: var(--soft); border-radius: 999px; padding: 1px 8px;
-}
-.chip.pick { font-family: inherit; border: 0; cursor: pointer; padding-right: 4px; }
-.head .fr { font-size: 15px; font-weight: 650; }
-.mark { color: var(--accent); font-weight: 650; }
-.quiz { display: grid; gap: 4px; padding: 6px 8px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); }
-.quiz .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.listen:hover { background: none; color: var(--green); text-decoration: underline; }
+.line.speakable { grid-template-columns: auto 1fr; column-gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.line.speakable > .say { grid-row: span 2; margin-top: 1px; }
+.line.playing .fr { color: var(--green); }
+.head { display: grid; gap: 4px; }
+.chip { justify-self: start; ${LABEL_CSS} font-size: 13.5px; color: var(--primary); background: var(--primary-soft); border-radius: 4px; padding: 0 8px; }
+.chip.pick { width: auto; border: 0; cursor: pointer; padding-right: 4px; }
+.head .fr { font-size: 17px; font-weight: 700; }
+.mark { font-weight: 600; background: linear-gradient(transparent 60%, var(--hl) 60%); }
+.quiz { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px dashed var(--border); }
+.quiz .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pill {
-  width: auto; height: auto; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px;
-  font-size: 12.5px; font-weight: 500; color: var(--fg);
+  width: auto; height: auto; padding: 3px 12px; border: 1.5px solid var(--primary); border-radius: 6px;
+  ${LABEL_CSS} font-weight: 700; font-size: 14px; color: var(--primary);
 }
-.pill.right, .pill.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
-.pill.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
-.pill.picked { border-color: var(--accent); color: var(--accent); background: var(--soft); }
+.pill.right, .pill.done { background: var(--green); border-color: var(--green); color: var(--on-green); }
+.pill.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad-ink); }
+.pill.picked { background: var(--primary); color: var(--on-primary); }
 .pill[disabled] { cursor: default; }
 .verdict { font-size: 12.5px; font-weight: 600; }
-.verdict.right { color: var(--ok); }
-.verdict.wrong { color: var(--bad); }
+.verdict.right { color: var(--green); }
+.verdict.wrong { color: var(--bad-ink); }
 .fix { font-size: 13px; }
 .gap-input {
-  font: inherit; font-weight: 500; width: 9em; padding: 0 4px; color: var(--fg); background: var(--bg);
-  border: 0; border-bottom: 2px solid var(--accent); border-radius: 0;
+  font: inherit; font-weight: 600; width: 9em; padding: 0 4px; color: var(--text); background: var(--surface);
+  border: 0; border-bottom: 2px solid var(--primary); border-radius: 0;
 }
 .gap-input.wrong { border-bottom-color: var(--bad); }
-.filled { font-weight: 650; padding: 0 2px; border-radius: 3px; }
-.filled.right { color: var(--ok); background: var(--ok-bg); }
-.filled.shown { color: var(--accent); background: var(--soft); }
-.match { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.match .col { display: grid; gap: 6px; align-content: start; }
-.match .pill { border-radius: 8px; padding: 4px 8px; text-align: start; }
-.match .word { display: flex; align-items: center; gap: 2px; }
+.filled { font-weight: 700; padding: 0 6px; border-radius: 4px; }
+.filled.right { color: var(--green); background: var(--green-soft); }
+.filled.shown { color: var(--primary); background: var(--primary-soft); }
+.match { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.match .col { display: grid; gap: 8px; align-content: start; }
+.match .pill { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; text-align: start; font: 500 13.5px/1.35 var(--font); letter-spacing: 0; text-transform: none; color: var(--text); }
+.match .pill.done, .match .pill.right { background: var(--green-tint); border-color: var(--green-line); color: var(--green); }
+.match .pill.picked { border: 1.5px solid var(--primary); background: var(--primary-soft); color: var(--text); }
+.match .pill.wrong { border: 1.5px solid var(--bad); }
+.match .word { display: flex; align-items: center; gap: 4px; }
 .match .word .pill { flex: 1; }
-.hint { color: var(--muted); font-size: 12px; margin: 0; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 0; }
 .again {
-  justify-self: start; width: auto; height: auto; padding: 4px 10px; margin-top: 2px;
-  border: 1px solid var(--border); border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--accent);
+  justify-self: end; width: auto; height: auto; padding: 7px 14px; margin-top: 4px; border-radius: 8px;
+  background: var(--primary); color: var(--on-primary); font-size: 12.5px; font-weight: 600;
 }
+.again:hover { background: var(--primary); color: var(--on-primary); filter: brightness(1.12); }
 ${PRACTICE_STYLES}
 ${scriptStyles(true)}
 `;
@@ -494,7 +502,7 @@ function scriptSwitch(doc: Document, script: NonNullable<WidgetOptions['script']
 /** Shows the widget, replacing any that's already on the page. */
 export function showWidget(doc: Document, options: WidgetOptions): Widget {
   removeWidget(doc);
-  const host = doc.createElement('div');
+  const host = themed(doc.createElement('div'));
   host.setAttribute(WIDGET_ATTR, '');
   const root = host.attachShadow({ mode: 'open' });
 
@@ -505,12 +513,13 @@ export function showWidget(doc: Document, options: WidgetOptions): Widget {
   panel.setAttribute('aria-label', `Language Weave: ${withoutReadings(options.title)}`);
 
   const bar = el(doc, 'div', 'bar');
+  const heading = el(doc, 'span', 'heading');
   const title = el(doc, 'span', 'title', options.title);
-  const collapse = el(doc, 'button', 'collapse', '–');
+  heading.append(...(options.kicker ? [el(doc, 'span', 'kicker', options.kicker)] : []), title);
+  const badge = el(doc, 'span', 'badge');
+  const collapse = iconButton(el(doc, 'button', 'collapse'), 'minus', 'Minimise');
   collapse.setAttribute('aria-expanded', 'true');
-  collapse.setAttribute('aria-label', 'Minimise');
-  const close = el(doc, 'button', 'close', '×');
-  close.setAttribute('aria-label', 'Close');
+  const close = iconButton(el(doc, 'button', 'close'), 'close', 'Close');
   let scale = options.textScale ?? 1;
   const smaller = el(doc, 'button', 'size smaller', 'A−');
   smaller.setAttribute('aria-label', 'Smaller text');
@@ -529,7 +538,8 @@ export function showWidget(doc: Document, options: WidgetOptions): Widget {
     });
   }
   setScale(scale);
-  bar.append(title, ...(options.script ? [scriptSwitch(doc, options.script)] : []), smaller, bigger, collapse, close);
+  const theme = options.onTheme && themeSwitch(doc, host, options.onTheme);
+  bar.append(heading, badge, ...(options.script ? [scriptSwitch(doc, options.script)] : []), ...(theme ? [theme] : []), smaller, bigger, collapse, close);
 
   const picker = el(doc, 'div', 'picker');
   const select = el(doc, 'select', 'format');
@@ -567,9 +577,8 @@ export function showWidget(doc: Document, options: WidgetOptions): Widget {
   let keepInView: (() => void) | undefined;
   const setCollapsed = (collapsed: boolean) => {
     panel.classList.toggle('collapsed', collapsed);
-    collapse.textContent = collapsed ? '+' : '–';
+    iconButton(collapse, collapsed ? 'plus' : 'minus', collapsed ? 'Expand' : 'Minimise');
     collapse.setAttribute('aria-expanded', String(!collapsed));
-    collapse.setAttribute('aria-label', collapsed ? 'Expand' : 'Minimise');
     keepInView?.();
   };
   if (options.collapsed) setCollapsed(true);
@@ -624,7 +633,33 @@ export function showWidget(doc: Document, options: WidgetOptions): Widget {
       panel.setAttribute('aria-label', `Language Weave: ${text}`);
     },
     pane: (id) => (panes.get(id) ?? first).body,
+    showTab: (id) => panes.get(id)?.tab.click(),
+    setBadge(text, label) {
+      badge.textContent = text;
+      if (label) badge.title = label;
+      else badge.removeAttribute('title');
+    },
   };
+}
+
+/** Whether the widget is showing dark now: its theme, or the system's when it follows the system. */
+function looksDark(host: HTMLElement): boolean {
+  const theme = host.getAttribute(THEME_ATTR);
+  return theme === 'dark' || (theme === 'system' && Boolean(host.ownerDocument.defaultView?.matchMedia?.('(prefers-color-scheme: dark)').matches));
+}
+
+/** The bar's switch between light and dark: everything Language Weave draws on the page follows. */
+function themeSwitch(doc: Document, host: HTMLElement, onTheme: (theme: Theme) => void) {
+  const button = el(doc, 'button', 'theme');
+  const draw = () => iconButton(button, looksDark(host) ? 'sun' : 'moon', looksDark(host) ? 'Light mode' : 'Dark mode', 15);
+  draw();
+  button.addEventListener('click', () => {
+    const next: Theme = looksDark(host) ? 'light' : 'dark';
+    setPageTheme(doc, next);
+    draw();
+    onTheme(next);
+  });
+  return button;
 }
 
 /** Replaces `target`'s children with reading lines and a note; with `speak`, each line can be read aloud. */
@@ -633,13 +668,7 @@ export function fillLines(target: HTMLElement, { lines = [], note }: WidgetConte
   const listen: Node[] = [];
   const onAll = speak?.onAll;
   const onLine = speak?.onLine;
-  if (speak && onAll && lines.length) {
-    const on = speak.all && speak.playing >= 0;
-    const button = el(doc, 'button', 'listen', on ? '■ Stop' : '▶ Listen');
-    button.setAttribute('aria-pressed', String(on));
-    button.addEventListener('click', () => onAll());
-    listen.push(button);
-  }
+  if (speak && onAll && lines.length) listen.push(listenButton(doc, speak.all && speak.playing >= 0, onAll));
   target.replaceChildren(
     ...listen,
     ...lines.map((line, i) => {
@@ -648,16 +677,30 @@ export function fillLines(target: HTMLElement, { lines = [], note }: WidgetConte
         const playing = speak.playing === i;
         row.classList.add('speakable');
         row.classList.toggle('playing', playing);
-        const say = el(doc, 'button', 'say', playing ? '■' : '▶');
-        say.setAttribute('aria-label', playing ? 'Stop' : `Listen: ${withoutReadings(line.fr)}`);
-        say.addEventListener('click', () => onLine(i));
-        row.append(say);
+        row.append(playButton(doc, playing, `Listen: ${withoutReadings(line.fr)}`, () => onLine(i)));
       }
       row.append(el(doc, 'span', 'fr', line.fr), el(doc, 'span', 'en', line.en));
       return row;
     }),
     ...(note ? [el(doc, 'p', 'note', note)] : []),
   );
+}
+
+/** Play all, or Stop while they're being read. */
+function listenButton(doc: Document, on: boolean, onAll: () => void) {
+  const button = el(doc, 'button', 'listen');
+  button.append(icon(doc, on ? 'pause' : 'play', 13), doc.createTextNode(on ? 'Stop' : 'Play all'));
+  button.setAttribute('aria-pressed', String(on));
+  button.addEventListener('click', () => onAll());
+  return button;
+}
+
+/** A line's round play button, a pause while it's being read. */
+function playButton(doc: Document, playing: boolean, label: string, onClick: () => void) {
+  const say = iconButton(el(doc, 'button', 'say'), playing ? 'pause' : 'play', playing ? 'Stop' : label, 10);
+  say.setAttribute('aria-pressed', String(playing));
+  say.addEventListener('click', onClick);
+  return say;
 }
 
 /** What the reader has answered in a piece's quizzes, kept across redraws (speech redraws the pane). */
@@ -719,8 +762,7 @@ function frSpan(doc: Document, text: string) {
 
 /** A speaker button that reads `word` slowly. */
 function sayWord(doc: Document, word: string, onWord: (text: string) => void) {
-  const b = el(doc, 'button', 'say-word', '🔊');
-  b.setAttribute('aria-label', `Listen slowly: ${withoutReadings(word)}`);
+  const b = iconButton(el(doc, 'button', 'say-word'), 'play', `Listen slowly: ${withoutReadings(word)}`, 9);
   b.addEventListener('click', () => onWord(word));
   return b;
 }
@@ -749,13 +791,7 @@ export function fillPiece(target: HTMLElement, view: PieceView, speak?: SpeakCon
     if (piece.title.fr) head.append(frSpan(doc, piece.title.fr), el(doc, 'span', 'en', piece.title.en));
     out.push(head);
     const onAll = speak?.onAll;
-    if (speak && onAll && piece.lines.some((l) => l.kind === 'line')) {
-      const on = speak.all && speak.playing >= 0;
-      const button = el(doc, 'button', 'listen', on ? '■ Stop' : '▶ Listen');
-      button.setAttribute('aria-pressed', String(on));
-      button.addEventListener('click', () => onAll());
-      out.push(button);
-    }
+    if (speak && onAll && piece.lines.some((l) => l.kind === 'line')) out.push(listenButton(doc, speak.all && speak.playing >= 0, onAll));
     const pairs = piece.lines.flatMap((l, i) => (l.kind === 'pair' ? [{ line: l, i }] : []));
     piece.lines.forEach((line, i) => {
       if (line.kind === 'pair') {
@@ -767,7 +803,7 @@ export function fillPiece(target: HTMLElement, view: PieceView, speak?: SpeakCon
   }
   if (view.note) out.push(el(doc, 'p', 'note', view.note));
   if (view.onAgain) {
-    const again = el(doc, 'button', 'again', '↻ New passage');
+    const again = el(doc, 'button', 'again', 'New passage');
     again.addEventListener('click', () => view.onAgain?.());
     out.push(again);
   }
@@ -797,10 +833,7 @@ function pieceLine(doc: Document, line: Exclude<PieceLine, { kind: 'pair' }>, i:
       const playing = speak.playing === i;
       row.classList.add('speakable');
       row.classList.toggle('playing', playing);
-      const say = el(doc, 'button', 'say', playing ? '■' : '▶');
-      say.setAttribute('aria-label', playing ? 'Stop' : `Listen: ${withoutReadings(line.fr.replace(/\*/g, ''))}`);
-      say.addEventListener('click', () => onLine(i));
-      row.append(say);
+      row.append(playButton(doc, playing, `Listen: ${withoutReadings(line.fr.replace(/\*/g, ''))}`, () => onLine(i)));
     }
     row.append(frSpan(doc, line.fr), el(doc, 'span', 'en', line.en));
     return row;
@@ -965,17 +998,28 @@ function para(doc: Document, className: string, text: string) {
 
 const KIND_LABELS: Record<SectionKind, string> = { grammar: 'Grammar', words: 'Words', phrases: 'Phrases' };
 
+export interface TextbookControls {
+  /** Reads target-language text aloud: a word slowly, an example at speed. None = no play buttons. */
+  say?(text: string, slow: boolean): void;
+  /** Which texts `say` can read; unset, any. */
+  can?(text: string): boolean;
+  /** "Practise this lesson", at the end: opens the Practice tab. None = no button. */
+  onPractise?(): void;
+}
+
 /**
- * Replaces `target`'s children with the lesson's textbook page: each section
- * on its own card, in teaching order, tagged with what it teaches. With
- * `onWord`, each word it `canWord` read can be heard.
+ * Replaces `target`'s children with the lesson's textbook page: its sections in teaching order, each
+ * numbered and tagged with what it teaches, a row at the top to jump to one, and play buttons on
+ * its words and examples when they can be heard.
  */
-export function fillTextbook(target: HTMLElement, tb: Textbook, onWord?: (text: string) => void, canWord?: (text: string) => boolean) {
+export function fillTextbook(target: HTMLElement, tb: Textbook, controls: TextbookControls = {}) {
   const doc = target.ownerDocument;
+  const { say, can } = controls;
+  const heard = (text: string) => Boolean(say) && (can?.(text) ?? true);
   target.classList.add('tb');
   const out: Node[] = [];
   if (tb.intro) out.push(para(doc, 'intro', tb.intro));
-  for (const [i, s] of tb.sections.entries()) {
+  const sections = tb.sections.map((s, i) => {
     const sec = el(doc, 'div', 'sec');
     const heading = el(doc, 'h4', '');
     const text = el(doc, 'span', '');
@@ -997,7 +1041,7 @@ export function fillTextbook(target: HTMLElement, tb: Textbook, onWord?: (text: 
       const words = el(doc, 'dl', 'words');
       for (const w of s.words) {
         const dt = setDirection(el(doc, 'dt', ''), w.word);
-        if (onWord && (canWord?.(w.word) ?? true)) dt.append(sayWord(doc, w.word, onWord));
+        if (heard(w.word)) dt.append(sayWord(doc, w.word, (t) => say!(t, true)));
         dt.append(...rubyNodes(doc, w.word));
         words.append(dt, el(doc, 'dd', '', w.english));
       }
@@ -1005,7 +1049,17 @@ export function fillTextbook(target: HTMLElement, tb: Textbook, onWord?: (text: 
     }
     if (s.examples.length) {
       const examples = el(doc, 'div', 'examples');
-      fillLines(examples, { lines: s.examples.map((e) => ({ fr: e.target, en: e.english })) });
+      const lines = s.examples.map((e) => ({ fr: e.target, en: e.english }));
+      const sayable = lines.some((l) => heard(l.fr));
+      fillLines(examples, { lines }, sayable ? {
+        playing: -1,
+        all: false,
+        onLine: (k) => say!(lines[k]!.fr, false),
+        onWord: (t) => say!(t, true),
+        canLine: (k) => heard(lines[k]!.fr),
+      } : undefined);
+      // Examples aren't kept as a sequence: lines that can't be heard have no button.
+      for (const [k, row] of [...examples.children].entries()) if (!heard(lines[k]!.fr)) row.querySelector('.say')?.remove();
       sec.append(examples);
     }
     if (s.watchOut.length) {
@@ -1013,7 +1067,28 @@ export function fillTextbook(target: HTMLElement, tb: Textbook, onWord?: (text: 
       watch.append(el(doc, 'b', '', 'Watch out'), ...s.watchOut.map((t) => para(doc, '', t)));
       sec.append(watch);
     }
-    out.push(sec);
+    return sec;
+  });
+  if (sections.length > 1) {
+    const toc = el(doc, 'nav', 'toc');
+    toc.setAttribute('aria-label', 'Sections');
+    tb.sections.forEach((s, i) => {
+      const jump = el(doc, 'button', '', `${i + 1} ${withoutReadings(s.heading.replace(/\*/g, ''))}`);
+      jump.title = withoutReadings(s.heading.replace(/\*/g, ''));
+      jump.addEventListener('click', () => {
+        const scroller = target.parentElement;
+        if (!scroller) return;
+        scroller.scrollTop += sections[i]!.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+      });
+      toc.append(jump);
+    });
+    out.push(toc);
+  }
+  out.push(...sections);
+  if (controls.onPractise) {
+    const practise = el(doc, 'button', 'practise', 'Practise this lesson');
+    practise.addEventListener('click', () => controls.onPractise?.());
+    out.push(practise);
   }
   target.replaceChildren(...out);
 }

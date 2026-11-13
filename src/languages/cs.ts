@@ -4,6 +4,7 @@ export const cs: LanguageConfig = {
   code: 'cs',
   displayName: 'Czech',
   flag: '🇨🇿',
+  greeting: 'Ahoj',
   bcp47: 'cs-CZ',
   genders: ['m', 'f', 'n'],
   grammarNotes: [

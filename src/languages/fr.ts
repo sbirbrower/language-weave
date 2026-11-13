@@ -4,6 +4,7 @@ export const fr: LanguageConfig = {
   code: 'fr',
   displayName: 'French',
   flag: '🇫🇷',
+  greeting: 'Bonjour',
   bcp47: 'fr-FR',
   genders: ['m', 'f'],
   grammarNotes: [

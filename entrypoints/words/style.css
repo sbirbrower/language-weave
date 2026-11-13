@@ -1,29 +1,57 @@
 @import '../progress/style.css';
 
-:root {
-  --accent: light-dark(#2f5bd3, #8fb0ff);
+.stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.stats .stat:nth-child(2) {
+  background: var(--green-tint);
+  border-color: var(--green-line);
+}
+
+.stats .stat:nth-child(2) strong,
+.stats .stat:nth-child(2) span {
+  color: var(--green);
 }
 
 .tools {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 1.2rem;
+  gap: 12px;
 }
 
 .tools label {
-  flex: 1 1 12rem;
+  flex: 1 1 16rem;
 }
 
 input[type='search'] {
   font: inherit;
+  color: var(--text);
   width: 100%;
   box-sizing: border-box;
-  padding: 0.35rem 0.5rem;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 button {
   font: inherit;
+  color: inherit;
+}
+
+#export {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#export:hover {
+  background: var(--surface-2);
 }
 
 .words {
@@ -34,9 +62,13 @@ button {
 
 .words li {
   display: flex;
-  gap: 0.6rem;
-  padding: 0.55rem 0;
+  gap: 12px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.words li:last-child {
+  border-bottom: 0;
 }
 
 .words li.empty {
@@ -52,62 +84,90 @@ button {
 .words .head {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 0.7rem;
-  align-items: baseline;
+  gap: 4px 10px;
+  align-items: center;
 }
 
 .words .word {
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 16px;
 }
 
-.words .say {
+.say {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: 0;
-  background: none;
-  padding: 0 0.15rem;
+  border-radius: 12px;
+  color: var(--green);
+  background: var(--green-soft);
   cursor: pointer;
-  font-size: 0.9rem;
+  flex: none;
+}
+
+.say:hover {
+  background: var(--green);
+  color: var(--on-green);
 }
 
 .words .definition {
-  margin: 0.1rem 0 0;
+  margin: 2px 0 0;
+  color: var(--muted);
 }
 
 .words .example {
-  margin: 0.35rem 0 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 6px 0 0;
+  font-style: italic;
   overflow-wrap: anywhere;
+}
+
+.words .example .say {
+  width: 20px;
+  height: 20px;
 }
 
 .words .english {
   color: var(--muted);
-  font-size: 0.85rem;
-  margin: 0.05rem 0 0;
+  font-size: 13px;
+  margin: 2px 0 0;
 }
 
 .words .actions {
   display: flex;
-  gap: 0.2rem;
+  gap: 4px;
   align-items: flex-start;
 }
 
 .toggle {
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--line);
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
   background: none;
-  color: var(--muted);
+  color: var(--faint);
   cursor: pointer;
 }
 
 .toggle:hover {
-  background: var(--soft);
+  background: var(--surface-2);
 }
 
 .toggle[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: light-dark(#ffffff, #10172a);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.toggle.known[aria-pressed='true'] {
+  color: var(--on-green);
+  background: var(--green);
 }
 
 details summary {

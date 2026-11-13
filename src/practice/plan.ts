@@ -41,7 +41,7 @@ export interface PickOptions {
 export function pickExercise(level: string, random: () => number, options: PickOptions): string {
   const lvl = levelIndex(level);
   const recent = new Set((options.recent ?? []).slice(-RECENT_EXERCISES));
-  const usable = EXERCISE_TYPES.filter((t) => fitsLevel(t, lvl) && fitsLang(t, options.lang) && (options.listening || !t.listening) && (options.speaking || !t.speaking));
+  const usable = EXERCISE_TYPES.filter((t) => !t.off && fitsLevel(t, lvl) && fitsLang(t, options.lang) && (options.listening || !t.listening) && (options.speaking || !t.speaking));
   const fresh = usable.filter((t) => !recent.has(t.id));
   const speakable = fresh.filter((t) => t.speaking);
   if (speakable.length && random() < SPEAKING_SHARE) return speakable[Math.floor(random() * speakable.length)]!.id;

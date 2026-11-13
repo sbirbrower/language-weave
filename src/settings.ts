@@ -3,6 +3,7 @@ import type { Level } from './grammar/types';
 import type { OtherProvider, ProviderModels } from './providers/route';
 import type { ChatProvider } from './providers/types';
 import type { ScriptView } from './ruby';
+import type { Theme } from './theme';
 import type { WidgetPosition, WidgetSize } from './widget';
 
 export type Effort = 'default' | 'low' | 'medium' | 'high';
@@ -63,6 +64,8 @@ export interface Settings {
   scriptViews: Partial<Record<string, ScriptView>>;
   /** The popup asks before weaving a page estimated to cost more than this, in USD. */
   confirmAboveUsd: number;
+  /** Light (the default), dark, or as the system is: every surface (`src/theme.ts`). */
+  theme: Theme;
   /** Logs rejected lines to the page console. Never logs keys. */
   debug: boolean;
 }
@@ -95,6 +98,7 @@ export const DEFAULT_SETTINGS: Settings = {
   textScale: 1,
   scriptViews: {},
   confirmAboveUsd: 0.2,
+  theme: 'light',
   debug: false,
 };
 

@@ -674,7 +674,8 @@ async function followTo(tabId: number) {
   if (s.mode !== 'lesson' || !apiKeyFor(s)) return;
   const text = await getLessonState();
   if (!text || !decodeLessonState(text)?.open) return;
-  // Pages Language Weave can't run on (chrome://, the Web Store) stay as they are, with no badge.
+  // Pages Language Weave can't run on (chrome://, the Web Store, or any tab not clicked on when the reader
+  // didn't allow every site: src/follow.ts) stay as they are, with no badge.
   await runContent(tabId, { follow: true }).catch(() => {});
 }
 
@@ -721,6 +722,7 @@ async function handle(
           textScale: s.textScale,
           scriptViews: s.scriptViews,
           calibration: await getCalibration(model, s.effort, thinks),
+          theme: s.theme,
           debug: s.debug,
         },
       };
@@ -788,6 +790,9 @@ async function handle(
       return { ok: true, value: null };
     case 'set-text-scale':
       await saveSettings({ textScale: msg.scale });
+      return { ok: true, value: null };
+    case 'set-theme':
+      await saveSettings({ theme: msg.theme });
       return { ok: true, value: null };
     case 'set-script-view':
       await saveSettings({ scriptViews: { ...(await getSettings()).scriptViews, [msg.language]: msg.view } });

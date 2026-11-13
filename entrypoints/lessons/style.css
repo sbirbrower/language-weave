@@ -1,84 +1,47 @@
-:root {
-  color-scheme: light dark;
-  --bg: light-dark(#fbfaf7, #17171a);
-  --text: light-dark(#1d1d1f, #ececee);
-  --muted: color-mix(in srgb, var(--text) 60%, transparent);
-  --line: color-mix(in srgb, var(--text) 14%, transparent);
-  --soft: color-mix(in srgb, var(--text) 5%, transparent);
-  --accent: light-dark(#3b7bd4, #79a9ee);
-  font: 15px/1.5 system-ui, sans-serif;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-}
+@import '../progress/style.css';
 
 main {
-  max-width: 46rem;
-  margin: 2rem auto 4rem;
-  padding: 0 16px;
+  max-width: 50rem;
 }
 
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+.intro {
+  max-width: 40rem;
+  line-height: 1.55;
 }
 
-h1 {
-  margin: 0;
-  font-size: 1.6rem;
+section h2 {
+  color: var(--primary);
+  font-size: 17px;
 }
 
-h2 {
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  margin: 0 0 0.6rem;
+section.draft {
+  border: 1.5px solid var(--green);
 }
 
-section {
-  margin-top: 2rem;
-}
-
-p {
-  margin: 0.3rem 0;
-}
-
-.intro,
-.muted {
-  color: var(--muted);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+section.draft h2 {
+  color: var(--green);
 }
 
 form {
   display: grid;
-  gap: 0.8rem;
+  gap: 14px;
 }
 
 form label {
   display: grid;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+  gap: 6px;
+  font-family: var(--label-font);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--muted);
 }
 
 .row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 12px;
 }
 
 .grow {
@@ -88,47 +51,66 @@ form label {
 input,
 select,
 textarea {
-  font: inherit;
-  font-weight: normal;
-  color: inherit;
-  background: var(--soft);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.4rem 0.5rem;
+  font: 14.5px/1.5 var(--font);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
   box-sizing: border-box;
   width: 100%;
 }
 
 header select {
   width: auto;
+  padding: 6px 10px;
+}
+
+#title {
+  font-weight: 600;
 }
 
 textarea {
   resize: vertical;
-  line-height: 1.45;
+  line-height: 1.6;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 12px;
 }
 
-button {
+form button,
+.lesson button {
   font: inherit;
-  padding: 0.4rem 0.9rem;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--bg);
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--primary);
+  color: var(--on-primary);
   cursor: pointer;
 }
 
-button.quiet {
+section.draft button[type='submit'] {
+  background: var(--green);
+  color: var(--on-green);
+}
+
+button.quiet,
+.lesson button.quiet {
   background: transparent;
+  color: var(--muted);
+  font-weight: 400;
+  padding: 9px 6px;
+}
+
+button.quiet:hover {
   color: var(--text);
-  border-color: var(--line);
 }
 
 button:disabled {
@@ -137,14 +119,21 @@ button:disabled {
 }
 
 .note {
-  padding: 0.5rem 0.7rem;
-  border-left: 3px solid var(--accent);
-  background: var(--soft);
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--text);
+  font-size: 13px;
 }
 
 .lesson {
   border-bottom: 1px solid var(--line);
-  padding: 0.5rem 0;
+  padding: 10px 0;
+}
+
+.lesson:last-child {
+  border-bottom: 0;
 }
 
 .lesson summary {
@@ -153,6 +142,14 @@ button:disabled {
 
 .lesson .title {
   font-weight: 600;
+}
+
+.lesson summary .muted {
+  font-family: var(--label-font);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--primary);
 }
 
 .lesson ul {

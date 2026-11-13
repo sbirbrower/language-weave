@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { startPageTheme, themeSwitch } from '@/src/pageTheme';
 import { BUILD_ID } from '@/src/build';
 import { languages, scriptViewFor } from '@/src/languages';
 import type { ResponseFor } from '@/src/messages';
@@ -9,6 +10,8 @@ import { createSpeaker, type Speaker } from '@/src/speaker';
 import type { Definition } from '@/src/vocab/definitions';
 import { ankiCsv, PROMOTION, vocabKey, vocabStore, wordLists, type ListedWord } from '@/src/vocab/store';
 import { wordRow } from '@/src/vocab/wordRows';
+
+startPageTheme();
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const languageSelect = $<HTMLSelectElement>('language');
@@ -132,6 +135,7 @@ $('export').addEventListener('click', async () => {
 });
 
 async function init() {
+  themeSwitch(document.getElementById('theme')!);
   settings = await getSettings();
   languageSelect.replaceChildren(
     ...Object.values(languages).map((l) => Object.assign(el('option', '', `${l.flag} ${l.displayName}`), { value: l.code, selected: l.code === settings.language })),

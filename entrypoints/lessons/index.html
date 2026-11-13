@@ -9,11 +9,15 @@
   <body>
     <main>
       <header>
-        <h1>Your lessons</h1>
-        <label>
-          <span class="visually-hidden">Language</span>
+        <div class="titles">
+          <span class="label">language weave</span>
+          <h1>Your lessons</h1>
+        </div>
+        <label class="language">
+          Language
           <select id="language"></select>
         </label>
+        <button type="button" id="theme" class="icon-button"></button>
       </header>
       <p class="intro">
         Ask for a lesson on anything: a topic, and as much as you like about it. Claude Opus writes it as a lesson like the course's, in under half a minute; check it, change
@@ -48,7 +52,7 @@
         </form>
       </section>
 
-      <section id="draftSection" aria-labelledby="draftTitle" hidden>
+      <section id="draftSection" class="draft" aria-labelledby="draftTitle" hidden>
         <h2 id="draftTitle">Check it</h2>
         <form id="draft">
           <label>

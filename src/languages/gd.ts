@@ -4,6 +4,7 @@ export const gd: LanguageConfig = {
   code: 'gd',
   displayName: 'Scottish Gaelic',
   flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  greeting: 'Halò',
   bcp47: 'gd-GB',
   // Neither Google Text-to-Speech nor Whisper has Scottish Gaelic.
   noVoice: true,

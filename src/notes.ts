@@ -1,3 +1,4 @@
+import { LABEL_CSS, themed } from './theme';
 import { BASE_STYLES, el, fillLines, type WidgetContent } from './widget';
 
 /**
@@ -81,22 +82,22 @@ export interface Notes {
 const STYLES = `${BASE_STYLES}
 :host { position: absolute; top: 0; left: 0; z-index: 2147483646; }
 .card {
-  position: absolute; box-sizing: border-box; display: grid; gap: 6px; padding: 8px 10px 10px;
-  background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-  border-radius: 8px; box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
-  font: 13.5px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  position: absolute; box-sizing: border-box; display: grid; gap: 6px; padding: 10px 12px 12px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: 0 2px 10px var(--shadow);
+  font: 13.5px/1.45 var(--font);
 }
-.card.bubble { border-left-width: 1px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.18); }
+.card.bubble { box-shadow: 0 8px 24px var(--shadow); }
 .card-bar { display: flex; align-items: center; }
-.card-title { flex: 1; color: var(--muted); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.card-bar button { width: 20px; height: 20px; font-size: 14px; }
+.card-title { flex: 1; color: var(--muted); font-size: 14px; ${LABEL_CSS} }
+.card-bar button { width: 22px; height: 22px; font-size: 14px; }
 .lines { display: grid; gap: 6px; }
 .chip {
-  position: absolute; width: auto; height: auto; padding: 3px 10px; border-radius: 999px;
-  background: var(--accent); color: var(--on-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
-  font: 600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  position: absolute; width: auto; height: auto; padding: 4px 12px; border-radius: 8px;
+  background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px var(--shadow);
+  font: 600 12px/1.4 var(--font);
 }
-.chip:hover { background: var(--accent); color: var(--on-accent); filter: brightness(1.1); }
+.chip:hover { background: var(--primary); color: var(--on-primary); filter: brightness(1.1); }
 .chip[hidden] { display: none; }
 `;
 
@@ -123,7 +124,7 @@ interface Open {
 export function showNotes(doc: Document): Notes {
   removeNotes(doc);
   const win = doc.defaultView!;
-  const host = doc.createElement('div');
+  const host = themed(doc.createElement('div'));
   host.setAttribute(NOTES_ATTR, '');
   const root = host.attachShadow({ mode: 'open' });
   const style = doc.createElement('style');

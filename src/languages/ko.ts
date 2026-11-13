@@ -11,6 +11,7 @@ export const ko: LanguageConfig = {
   code: 'ko',
   displayName: 'Korean',
   flag: '🇰🇷',
+  greeting: '안녕하세요',
   bcp47: 'ko-KR',
   genders: [],
   grammarNotes: [

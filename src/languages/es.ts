@@ -4,6 +4,7 @@ export const es: LanguageConfig = {
   code: 'es',
   displayName: 'Spanish',
   flag: '🇪🇸',
+  greeting: 'Hola',
   bcp47: 'es-ES',
   genders: ['m', 'f'],
   grammarNotes: [

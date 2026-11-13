@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<!-- Fonts: Noto Serif, Noto Serif JP, Noto Serif Devanagari (OFL). The PNGs in public/icon/ are rendered from this; 128.png is scaled to 96px with 16px padding. -->
+<rect x="8" y="8" width="112" height="112" rx="26" fill="#24324A"/>
+<g font-size="29" text-anchor="middle" dominant-baseline="central">
+<rect x="16" y="16" width="46" height="46" rx="11" fill="#F25F5C"/><text x="39" y="40" fill="#FFFFFF" font-family="'Noto Serif', serif">A</text>
+<rect x="66" y="16" width="46" height="46" rx="11" fill="#FFE066"/><text x="89" y="40" fill="#24324A" font-family="'Noto Serif JP', serif">あ</text>
+<rect x="16" y="66" width="46" height="46" rx="11" fill="#70C1B3"/><text x="39" y="90" fill="#24324A" font-family="'Noto Serif', serif">Ж</text>
+<rect x="66" y="66" width="46" height="46" rx="11" fill="#F4F1EC"/><text x="89" y="90" fill="#24324A" font-family="'Noto Serif Devanagari', serif">अ</text>
+</g>
+</svg>

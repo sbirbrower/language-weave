@@ -11,6 +11,7 @@ export const zh: LanguageConfig = {
   code: 'zh',
   displayName: 'Chinese',
   flag: '🇨🇳',
+  greeting: '你好',
   bcp47: 'zh-CN',
   speechLocale: 'cmn-CN',
   genders: [],

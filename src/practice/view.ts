@@ -1,5 +1,6 @@
 import { setDirection } from '../direction';
 import { composeBlock } from '../hangul';
+import { icon, iconButton, type IconName } from '../icons';
 import { italicSpans } from '../passage/textbook';
 import { rubyNodes, withoutReadings } from '../ruby';
 import { el, sameAnswer } from '../widget';
@@ -86,14 +87,19 @@ function button(doc: Doc, className: string, text: string, onClick?: () => void)
   return b;
 }
 
-/** Whether `text` gets a 🔊. */
+/** A button with an icon before its text. */
+function withIcon(b: HTMLElement, name: IconName) {
+  b.prepend(icon(b.ownerDocument, name, 13));
+  return b;
+}
+
+/** Whether `text` gets a play button. */
 const sayable = (c: PracticeControls, text: string) => Boolean(c.say) && (c.canSay?.(text.replace(/\*/g, '')) ?? true);
 
-/** 🔊 for target-language text: slowly for a word, at speed for a sentence. */
+/** A play button for target-language text: slowly for a word, at speed for a sentence. */
 function sayButton(doc: Doc, text: string, c: PracticeControls) {
   const spoken = text.replace(/\*/g, '');
-  const b = el(doc, 'button', 'say-word', '🔊');
-  b.setAttribute('aria-label', `Listen: ${withoutReadings(spoken)}`);
+  const b = iconButton(el(doc, 'button', 'say-word'), 'play', `Listen: ${withoutReadings(spoken)}`, 9);
   b.addEventListener('click', () => c.say?.(spoken, !/\s/.test(spoken.trim())));
   return b;
 }
@@ -140,7 +146,7 @@ function message(doc: Doc, m: { from: string; lines: Line[] }, done: boolean, c:
 function audio(doc: Doc, text: string, en: string | undefined, done: boolean, a: Answer, c: PracticeControls) {
   const box = el(doc, 'div', 'px-audio');
   if (sayable(c, text)) {
-    box.append(button(doc, 'px-play', '▶ Play', () => c.say!(text)), button(doc, 'px-alt', '🐢 Slowly', () => c.say!(text, true)));
+    box.append(withIcon(button(doc, 'px-play', 'Play', () => c.say!(text)), 'play'), withIcon(button(doc, 'px-alt', 'Slowly', () => c.say!(text, true)), 'slow'));
   } else if (!a.shown && !done) {
     box.append(el(doc, 'p', 'hint', 'Audio is off (no speech key in Options).'), button(doc, 'px-alt', 'Show the text', () => {
       a.shown = true;
@@ -416,8 +422,11 @@ function spoken(doc: Doc, a: Answer, done: boolean, c: PracticeControls) {
   if (!done) {
     if (!c.record) box.append(el(doc, 'p', 'hint', 'Speaking is off (Language Weave options).'));
     else if (s.status === 'hearing') box.append(el(doc, 'p', 'hint', 'Listening…'));
-    else if (s.status === 'recording') box.append(button(doc, 'px-go px-rec on', '■ Stop', c.record));
-    else box.append(button(doc, 'px-go px-rec', s.tries ? '🎙 Try again' : '🎙 Record', c.record));
+    else {
+      const on = s.status === 'recording';
+      const label = on ? 'Stop' : s.tries ? 'Try again' : 'Record';
+      box.append(iconButton(button(doc, `px-go px-rec${on ? ' on' : ''}`, '', c.record), on ? 'pause' : 'mic', label, 24), el(doc, 'span', 'px-rec-label', on ? 'tap to stop' : s.tries ? 'tap to try again' : 'tap to record'));
+    }
   }
   if (s.heard && s.status !== 'hearing') {
     const words = setDirection(el(doc, 'p', 'px-said'), s.heard.words.map((w) => w.text).join(' '));
@@ -517,7 +526,7 @@ function footer(doc: Doc, view: PracticeView, step: Step, c: PracticeControls) {
   const foot = el(doc, 'div', 'px-foot');
   if (view.result === undefined) {
     const hint = view.hint;
-    if (hint) foot.append(hint.text ? prose(doc, 'px-hint', `💡 ${hint.text}`) : el(doc, 'p', 'hint', hint.error ?? 'Thinking of a hint…'));
+    if (hint) foot.append(hint.text ? prose(doc, 'px-hint', hint.text) : el(doc, 'p', 'hint', hint.error ?? 'Thinking of a hint…'));
     const row = el(doc, 'div', 'px-row');
     if (!playsOut(step)) {
       // Always wired, so typing an answer can wake it without a redraw.
@@ -525,7 +534,7 @@ function footer(doc: Doc, view: PracticeView, step: Step, c: PracticeControls) {
       if (grade(step, view.answer) === undefined) check.setAttribute('disabled', '');
       row.append(check);
     }
-    if (c.hint && hasHint(step)) row.append(button(doc, 'px-alt', '💡 Hint', hint ? undefined : c.hint));
+    if (c.hint && hasHint(step)) row.append(withIcon(button(doc, 'px-alt', 'Hint', hint ? undefined : c.hint), 'bulb'));
     // Once the hint is in (or failed), the answer is one tap away.
     if (hint && (hint.text || hint.error)) row.append(button(doc, 'px-alt', 'Answer', c.reveal));
     row.append(button(doc, 'px-alt', 'Skip', c.another));
@@ -536,9 +545,11 @@ function footer(doc: Doc, view: PracticeView, step: Step, c: PracticeControls) {
   // Heard, but not every word: still a pass, said kindly.
   const almost = step.kind === 'speak' && view.answer.spoken?.heard?.tier === 'almost';
   const praise = almost ? 'Nearly! The grey words weren’t heard clearly.' : view.practice?.praise || 'Right!';
-  foot.append(el(doc, 'p', `px-verdict ${view.result ? 'good' : 'bad'}`, view.result ? `✓ ${praise}` : view.revealed ? 'The answer:' : '✗ Not quite'));
+  const result = el(doc, 'div', `px-result ${almost ? 'almost' : view.result ? 'good' : 'bad'}`);
+  result.append(el(doc, 'p', `px-verdict ${view.result ? 'good' : 'bad'}`, view.result ? `✓ ${praise}` : view.revealed ? 'The answer:' : '✗ Not quite'));
   const why = 'why' in step ? step.why : '';
-  if (why) foot.append(prose(doc, 'px-why', why));
+  if (why) result.append(prose(doc, 'px-why', why));
+  foot.append(result);
   const row = el(doc, 'div', 'px-row');
   if (view.past) {
     // Looking back: only back and forward, nothing is asked for.
@@ -547,7 +558,7 @@ function footer(doc: Doc, view: PracticeView, step: Step, c: PracticeControls) {
     foot.append(row);
     return foot;
   }
-  row.append(button(doc, 'px-go', 'Next exercise →', c.another), button(doc, 'px-alt', '↻ More like this', c.like));
+  row.append(button(doc, 'px-go px-next', 'Next exercise →', c.another), withIcon(button(doc, 'px-alt', 'More like this', c.like), 'again'));
   if (c.back) row.append(button(doc, 'px-alt', '← Back', c.back));
   foot.append(row);
   return foot;
@@ -582,6 +593,6 @@ export function fillPractice(target: HTMLElement, view: PracticeView, c: Practic
     out.push(line);
   }
   if (view.note) out.push(el(doc, 'p', 'note', view.note));
-  if (!step && view.note && !/^Writing/.test(view.note)) out.push(button(doc, 'px-alt', '↻ Try again', c.another));
+  if (!step && view.note && !/^Writing/.test(view.note)) out.push(withIcon(button(doc, 'px-alt', 'Try again', c.another), 'again'));
   target.replaceChildren(...out);
 }

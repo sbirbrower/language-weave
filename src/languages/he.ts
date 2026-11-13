@@ -11,6 +11,7 @@ export const he: LanguageConfig = {
   code: 'he',
   displayName: 'Hebrew',
   flag: '🇮🇱',
+  greeting: 'שלום',
   bcp47: 'he-IL',
   genders: ['m', 'f'],
   grammarNotes: [

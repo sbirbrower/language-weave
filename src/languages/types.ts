@@ -6,8 +6,10 @@ export interface LanguageConfig {
   /** Short code used as the vocab key prefix, e.g. `fr` in `fr:chien`. */
   code: string;
   displayName: string;
-  /** Flag emoji shown beside the name in the popup. */
+  /** Flag emoji shown beside the name in the pages' language menus. */
   flag: string;
+  /** "Hello" in the language, as it's written: under its code on the popup's language tiles. */
+  greeting: string;
   /** BCP-47 tag for `lang` attributes and speech synthesis. */
   bcp47: string;
   /** Google Text-to-Speech's locale, where it isn't `bcp47` (Mandarin's voices are cmn-CN, its pages zh-CN). */

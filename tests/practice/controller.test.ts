@@ -104,13 +104,13 @@ describe('the Practice tab', () => {
     await vi.waitFor(() => expect(chip()).toBe('What does it mean?'));
     expect(hint).toHaveBeenCalled();
     expect(pane().querySelector('.px-hint')).toBeNull();
-    click('💡 Hint');
-    await vi.waitFor(() => expect(pane().querySelector('.px-hint')!.textContent).toBe('💡 Think of a viennoiserie.'));
-    expect(button('💡 Hint')!.disabled).toBe(true);
+    click('Hint');
+    await vi.waitFor(() => expect(pane().querySelector('.px-hint')!.textContent).toBe('Think of a viennoiserie.'));
+    expect(button('Hint')!.disabled).toBe(true);
     click('Skip');
     // Pairs have no hint.
     await vi.waitFor(() => expect(chip()).toBe('Match the pairs'));
-    expect(button('💡 Hint')).toBeUndefined();
+    expect(button('Hint')).toBeUndefined();
   });
 
   it('carries the exercise, its answer and the next one to another tab, through storage', async () => {
@@ -181,7 +181,7 @@ describe('the Practice tab', () => {
     startPassage(deps(request)).ready();
     tab('Practice').click();
     await vi.waitFor(() => expect(pane().textContent).toContain('No API key.'));
-    click('↻ Try again');
+    click('Try again');
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
   });
 
@@ -241,7 +241,7 @@ describe('the Practice tab', () => {
     await vi.waitFor(() => expect(chip()).toBe('Silent letters'));
     // Only the one written ahead is asked for: the drill was used just now, so it's an exercise as usual.
     expect(request.mock.calls.map(([plan]) => plan.type)).not.toContain('silent_letters');
-    expect(button('💡 Hint')).toBeUndefined();
+    expect(button('Hint')).toBeUndefined();
     const step = passage.state().practice?.view.practice?.step;
     if (step?.kind !== 'units') throw new Error('not a units drill');
     const units = [...pane().querySelectorAll<HTMLButtonElement>('.px-unit')];

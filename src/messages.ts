@@ -14,6 +14,7 @@ import type { SyllabusLesson } from './syllabus/types';
 import type { ChatProvider } from './providers/types';
 import type { Effort } from './settings';
 import type { Definition } from './vocab/definitions';
+import type { Theme } from './theme';
 import type { WordStatus } from './vocab/store';
 import type { WeaveLine } from './weave/parse';
 import type { WidgetPosition, WidgetSize } from './widget';
@@ -74,6 +75,8 @@ export type Request =
   | { type: 'set-widget-position'; position: WidgetPosition | null }
   | { type: 'set-widget-size'; size: WidgetSize | null }
   | { type: 'set-text-scale'; scale: number }
+  /** The reader switched the theme from the widget. */
+  | { type: 'set-theme'; theme: Theme }
   | { type: 'set-script-view'; language: string; view: ScriptView }
   | {
       type: 'passage';
@@ -206,6 +209,8 @@ export interface WeaveConfig {
   scriptViews: Partial<Record<string, ScriptView>>;
   /** Past estimate accuracy for this model and effort. */
   calibration?: Calibration;
+  /** Light, dark or as the system is (`Settings.theme`). */
+  theme: Theme;
   debug: boolean;
 }
 
@@ -225,6 +230,7 @@ export interface ResponseFor {
   'set-widget-position': Result<null>;
   'set-widget-size': Result<null>;
   'set-text-scale': Result<null>;
+  'set-theme': Result<null>;
   'set-script-view': Result<null>;
   passage: Result<{ piece: Piece; usd: number | null }>;
   textbook: Result<{ textbook: Textbook; usd: number | null }>;
@@ -269,7 +275,9 @@ export type TabRequest =
   | { type: 'unweave' }
   | { type: 'reveal'; key: string }
   /** Save a word on the page, mark it known, or neither (`src/vocab/`). */
-  | { type: 'vocab-set'; key: string; status: WordStatus };
+  | { type: 'vocab-set'; key: string; status: WordStatus }
+  /** The reader switched the theme in the popup: what's drawn on this page follows. */
+  | { type: 'set-theme'; theme: Theme };
 
 export interface VocabItem {
   key: string;
@@ -320,4 +328,5 @@ export interface TabResponseFor {
   unweave: null;
   reveal: boolean;
   'vocab-set': boolean;
+  'set-theme': null;
 }

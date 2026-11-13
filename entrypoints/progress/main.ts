@@ -1,8 +1,9 @@
 import { browser } from 'wxt/browser';
+import { startPageTheme, themeSwitch } from '@/src/pageTheme';
 import { setDirection } from '@/src/direction';
 import { languages, scriptViewFor } from '@/src/languages';
-import { kitCacheKey, type Kit } from '@/src/passage/kit';
-import { dayOf, newLedger, type Ledger } from '@/src/practice/ledger';
+import { dayOf, type Ledger } from '@/src/practice/ledger';
+import { loadProgress } from '@/src/progress/load';
 import {
   calendar,
   currentLevel,
@@ -19,8 +20,8 @@ import {
 } from '@/src/progress/progress';
 import { rubyNodes, SCRIPT_ATTR, scriptStyles } from '@/src/ruby';
 import { getSettings, type Settings } from '@/src/settings';
-import type { SyllabusLesson } from '@/src/syllabus';
-import { allLessonsFor } from '@/src/syllabus/stored';
+
+startPageTheme();
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const languageSelect = $<HTMLSelectElement>('language');
@@ -48,21 +49,6 @@ const dayLabel = (day: string) => {
   const [y, m, d] = day.split('-').map(Number);
   return new Date(y!, m! - 1, d!).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 };
-
-/** A language's ledger and its lessons' kits: the one now if built under this version, else any older one, for its labels. */
-async function load(lang: string): Promise<{ ledger: Ledger; kits: Record<string, Kit>; lessons: SyllabusLesson[] }> {
-  const key = `practice-ledger|${lang}`;
-  const lessons = await allLessonsFor(lang);
-  const stored = await browser.storage.local.get([key, 'kits']);
-  const ledger = { ...newLedger(), ...(stored[key] as Partial<Ledger> | undefined) };
-  const kits = (stored['kits'] ?? {}) as Record<string, Kit>;
-  const byLesson: Record<string, Kit> = {};
-  for (const lesson of lessons) {
-    const kit = kits[kitCacheKey(lesson)] ?? Object.entries(kits).find(([k]) => k.startsWith(`${lesson.id}|`))?.[1];
-    if (kit) byLesson[lesson.id] = kit;
-  }
-  return { ledger, kits: byLesson, lessons };
-}
 
 function showRecap(ledger: Ledger, lessons: LessonProgress[], today: string) {
   const r = recap(ledger, lessons, today);
@@ -131,7 +117,7 @@ function showMilestones(ledger: Ledger, lessons: LessonProgress[], today: string
   $('milestones').replaceChildren(
     ...milestones(ledger, lessons, today).map((m) => {
       const li = el('li', m.reached ? 'reached' : '');
-      li.append(el('span', 'icon', m.reached ? '★' : '☆'), el('span', '', m.title));
+      li.append(el('span', `dot${m.reached ? ' learned' : ''}`), el('span', '', m.title));
       if (m.on) li.append(el('span', 'muted', dayLabel(m.on)));
       return li;
     }),
@@ -148,7 +134,7 @@ function showNeedsWork(lessons: LessonProgress[]) {
   list.replaceChildren(
     ...flagged.map((f) => {
       const li = el('li');
-      li.append(el('span', 'kind', f.kind), f.kind === 'word' ? inLanguage(f.label, 'label') : el('span', 'label', f.label));
+      li.append(el('span', 'kind', f.kind), f.kind === 'word' ? inLanguage(f.label, 'what') : el('span', 'what', f.label));
       if (f.gloss) li.append(el('span', 'muted', f.gloss));
       li.append(el('span', 'muted where', `${titles.get(f.lessonId) ?? f.lessonId} · ${tallyText(f)}`));
       return li;
@@ -193,7 +179,7 @@ let settings: Settings;
 async function render() {
   const lang = languageSelect.value;
   const config = languages[lang];
-  const { ledger, kits, lessons: course } = await load(lang);
+  const { ledger, kits, lessons: course } = await loadProgress(lang);
   if (languageSelect.value !== lang) return;
   const today = dayOf(new Date());
   const lessons = course.map((l) => lessonProgress(l, kits[l.id], ledger.lessons[l.id]));
@@ -214,6 +200,7 @@ async function render() {
 }
 
 async function init() {
+  themeSwitch($('theme'));
   settings = await getSettings();
   languageSelect.replaceChildren(
     ...Object.values(languages).map((l) => Object.assign(el('option', '', `${l.flag} ${l.displayName}`), { value: l.code, selected: l.code === settings.language })),

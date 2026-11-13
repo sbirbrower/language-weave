@@ -27,6 +27,8 @@ export interface ExerciseType {
   speaking?: boolean;
   /** Only in these languages (codes): grammar no other language has. None = every language. */
   langs?: readonly string[];
+  /** Out of the rotation: never planned, but kept for evals (`EVAL_TYPES=<id>`) in case it comes back. */
+  off?: true;
   /** What to write, for the prompt. */
   ask(L: string): string;
   /** The JSON line it's written as, with placeholders. */
@@ -321,6 +323,8 @@ const TYPES: ExerciseType[] = [
     name: 'Spot the form',
     levels: [A1, C1],
     stage: 'forms',
+    // Off: keys missed uses of the form, and on a sound point it was a hunt for letters.
+    off: true,
     ask: (L) =>
       `A short ${L} paragraph from the situation (3–4 sentences) that uses one form it practises 2–4 times, and at least one word that looks like that form but isn't (the same verb in another tense, the same ending on another kind of word); "form" names it in plain English (such as "verbs in the passé composé"); "parts" is the paragraph in order, as plain strings and one object per use of the form, its "target" exactly as written (every word of it, such as both words of a compound tense) and "why" saying in English what it is. Keep the spaces between parts inside the strings. "en" is the whole paragraph's English, shown once answered.`,
     shape: (L) => `{"type":"spot_form","instruction":"Tap every use of the form","form":"<English>","parts":["<${L} text> ",{"target":"<${L} form>","why":"<English>"}," <${L} text>"],"en":"<English>"}`,

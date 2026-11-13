@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { startPageTheme, themeSwitch } from '@/src/pageTheme';
 import { BUILD_ID } from '@/src/build';
 import { formatUsd } from '@/src/cost';
 import { setDirection } from '@/src/direction';
@@ -9,6 +10,8 @@ import { rubyNodes, scriptStyles } from '@/src/ruby';
 import { getSettings, saveSettings } from '@/src/settings';
 import type { CustomLesson, LessonRequest } from '@/src/syllabus/custom';
 import { customLessonsFor, deleteCustomLesson, saveCustomLesson } from '@/src/syllabus/stored';
+
+startPageTheme();
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const languageSelect = $<HTMLSelectElement>('language');
@@ -174,6 +177,7 @@ languageSelect.addEventListener('change', () => {
 });
 
 async function init() {
+  themeSwitch(document.getElementById('theme')!);
   const settings = await getSettings();
   const asked = new URLSearchParams(location.search).get('lang');
   languageSelect.replaceChildren(...Object.values(languages).map((l) => new Option(`${l.flag} ${l.displayName}`, l.code)));

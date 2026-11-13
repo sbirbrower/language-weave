@@ -56,7 +56,9 @@ import { pageSections, sectionChunks, sectionOnScreen, selectionText, withSelect
 import { startMarks, type Marker } from '@/src/marks/controller';
 import { showMarkPopup, type MarkPopup } from '@/src/marks/popup';
 import type { ShownMark } from '@/src/marks/stream';
-import { MARK_STYLES, removeMarks } from '@/src/marks/write';
+import { MARK_CLASS, MARK_STYLES, removeMarks } from '@/src/marks/write';
+import { showMarkCard, type MarkCard } from '@/src/marks/card';
+import { addFonts, setPageTheme, type Theme } from '@/src/theme';
 import { startPassage, type PassageDeps, type PassageWidget } from '@/src/passage/controller';
 import type { Piece } from '@/src/passage/piece';
 import { recordingKey } from '@/src/recordings';
@@ -182,6 +184,8 @@ interface PageState {
   /** The lesson the marks on the page are for. */
   marksLesson?: string;
   markPopup?: MarkPopup;
+  /** While the page is marked: how many marks, with Weave instead and Clear. */
+  markCard?: MarkCard;
   /** One per language, so a word and a passage line never play at once. */
   speakers?: Map<string, Speaker>;
   /** The settings the page's words were woven with: switching mode with the same ones keeps them. */
@@ -212,8 +216,13 @@ const FLASH_CLASS = `${WOVEN_CLASS}--flash`;
 const STYLES = `
 .${WOVEN_CLASS} {
   cursor: pointer;
-  text-decoration: underline dotted 1px;
-  text-underline-offset: 0.2em;
+  /* A highlighter stroke under the lower part of the word, light enough for any page's text to show through. */
+  background-image: linear-gradient(transparent 60%, rgb(255 229 138 / 0.75) 60%, rgb(255 229 138 / 0.75) 92%, transparent 92%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+@media (prefers-color-scheme: dark) {
+  .${WOVEN_CLASS} { background-image: linear-gradient(transparent 60%, rgb(255 214 90 / 0.35) 60%, rgb(255 214 90 / 0.35) 92%, transparent 92%); }
 }
 .${WOVEN_CLASS} > .${FR_CLASS}[hidden], .${WOVEN_CLASS} > .${EN_CLASS}[hidden] { display: none !important; }
 @keyframes tissage-flash { from { background-color: rgb(253 224 71 / 0.9); } to { background-color: transparent; } }
@@ -256,6 +265,9 @@ function stopMarking(state: PageState) {
   state.marksLesson = undefined;
   state.markPopup?.stop();
   state.markPopup = undefined;
+  state.markCard?.stop();
+  state.markCard = undefined;
+  state.passage?.setBadge('');
   removeMarks(document);
 }
 
@@ -400,6 +412,10 @@ function install(lang: LanguageConfig): PageState {
         reply<'vocab-set'>(Boolean(el && state.words));
         return;
       }
+      case 'set-theme':
+        setPageTheme(document, msg.theme);
+        reply<'set-theme'>(null);
+        return;
     }
   });
 
@@ -504,6 +520,10 @@ function showScript(config: WeaveConfig): ScriptView | undefined {
  */
 function placementFor(state: PageState, config: WeaveConfig) {
   state.textScale = config.textScale;
+  // The widget's look: the reader's theme, and its fonts, bundled with the extension.
+  setPageTheme(document, config.theme);
+  addFonts(document, (file) => extensionUrl(`/fonts/${file}`));
+  const level = config.mode === 'lesson' ? syllabusFor(config)?.level : undefined;
   const lang = getLanguage(config.language);
   const view = showScript(config);
   return {
@@ -526,8 +546,14 @@ function placementFor(state: PageState, config: WeaveConfig) {
       state.textScale = scale;
       void send({ type: 'set-text-scale', scale });
     },
+    // The lesson's level, or the language woven into the page.
+    kicker: level ? level.replace(/^CEFR\s*/i, '') : config.language,
+    onTheme: (theme: Theme) => void send({ type: 'set-theme', theme }),
   };
 }
+
+/** A file bundled with the extension (`public/`), as the page can load it. */
+const extensionUrl = (path: string) => (browser.runtime.getURL as (path: string) => string)(path);
 
 /**
  * Lesson mode's widget: a scene on the lesson's theme, the same on any page. With `shared` (this
@@ -890,6 +916,12 @@ function pickInput(root: Element, segments: Segment[]) {
   return { title: pageTitle(), headings: headings(root), passages: onScreenText(segments, LOOKAHEAD) };
 }
 
+/** Runs as the popup's buttons do (`weave`: lesson mode's "Weave this page"), from the page itself. */
+function runAsked(asked: TissageRun) {
+  globalThis.__tissageRun = asked;
+  return weavePage();
+}
+
 async function weavePage() {
   const asked = globalThis.__tissageRun ?? {};
   globalThis.__tissageRun = undefined;
@@ -946,6 +978,19 @@ async function weavePage() {
     const { root, segments } = findPageText(document);
     const speaker = speech(lesson.lang);
     state.markPopup = showMarkPopup(document, speaker && ((text) => speaker.play([text], () => {}, (error) => console.warn(`[tissage] ${error}`), true)), () => state.textScale, speaker?.can);
+    state.markCard = showMarkCard(document, lesson.title.replace(/《[^》]*》/g, ''), {
+      // As the popup's "Weave this page" would: the marks come off and the lesson's words go in.
+      weave: () => {
+        stopMarking(state);
+        void runAsked({ weave: true });
+      },
+      clear: () => stopMarking(state),
+    });
+    const marked = () => {
+      const n = document.querySelectorAll(`.${MARK_CLASS}`).length;
+      state.markCard?.count(n);
+      state.passage?.setBadge(n ? String(n) : '', `${n} mark${n === 1 ? '' : 's'} on this page`);
+    };
     state.marks = startMarks({
       doc: document,
       lang: getLanguage(lesson.lang),
@@ -958,6 +1003,7 @@ async function weavePage() {
         ),
       onSpend: (usd) => addSpend(state, usd),
       onError: (error) => console.warn(`[tissage] marks: ${error}`),
+      onMarked: marked,
     });
   };
   if (keepsWords) {
